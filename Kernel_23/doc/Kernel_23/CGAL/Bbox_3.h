@@ -18,9 +18,18 @@ public:
 /// @{
 
 /*!
+introduces an \em empty bounding box with lower left
+corner point at \f$ (\infty, \infty, \infty) \f$
+and with upper right corner point at
+\f$ (-\infty, -\infty, -\infty) \f$, \f$ \infty \f$ being
+`std::numeric_limits<double>::%infinity()`.
+*/
+  Bbox_3();
+
+/*!
 introduces a bounding box `b` with lexicographically 
 smallest corner point at `(xmin, ymin, zmin)` 
-lexicographically largest corner point at 
+and lexicographically largest corner point at
 `(xmax, ymax, zmax)`. 
 */ 
 Bbox_3(double x_min, double y_min, double z_min, 
@@ -115,6 +124,8 @@ intersection is non-empty.
 */
 bool do_overlap(const Bbox_3 &bb1, const Bbox_3 &bb2);
 
+/// @}
+
 /*!
 returns the bounding box of the objects in the range `[first,past_end[`.
 Each object in the range must have a member function `BBox_3 bbox()`
@@ -137,6 +148,5 @@ operator returning the bounding box of each object in the range.
 template<class InputIterator, class Traits>
 Bbox_3 bbox_3(InputIterator begin, InputIterator past_end, const Traits& traits);
 
-/// @}
 
 } /* end namespace CGAL */

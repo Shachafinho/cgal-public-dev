@@ -1,23 +1,3 @@
-// Copyright (c) 2012 GeometryFactory (France). All rights reserved.
-// All rights reserved.
-//
-// Licensees holding a valid commercial license may use this file in
-// accordance with the commercial license agreement provided with the software.
-//
-// This file is part of CGAL (www.cgal.org); you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public License as
-// published by the Free Software Foundation; version 2.1 of the License.
-// See the file LICENSE.LGPL distributed with CGAL.
-//
-// This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
-// WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-//
-// $URL$
-// $Id$
-// 
-//
-// Author(s)     : Philipp Möller
-
 #include <CGAL/Simple_cartesian.h>
 #include <CGAL/boost/graph/graph_traits_Polyhedron_3.h>
 #include <CGAL/boost/graph/graph_concepts.h>
@@ -79,51 +59,6 @@ void concept_check_polyhedron() {
   boost::graph_traits<Polyhedron>::null_face();
 }
 
-template<typename Polyhedron>
-void runtime_check_halfedgegraph()
-{
-  // u        v
-  // +--------+
-  // |\      /|
-  // | \ f2 / |
-  // |  \y /  |
-  // | f3\/ f1|
-  // |   /\   |
-  // |  /  \  |
-  // | / f4 \ |
-  // |/      \|
-  // +--------+
-  // w        x
-  Polyhedron p;
-  vertex_descriptor 
-    u = add_vertex(Point_3(0,2,0), p),
-    v = add_vertex(Point_3(2,2,0), p),
-    w = add_vertex(Point_3(0,0,0), p),
-    x = add_vertex(Point_3(2,0,0), p),
-    y = add_vertex(Point_3(1,1,0), p);
-  
-  add_edge(v, u, p);
-  add_edge(u, y, p);
-  add_edge(y, v, p);
-  add_face(p);
-
-  add_edge(u, w, p);
-  add_edge(w, y, p);
-  add_face(p);
-
-  add_edge(w, x, p);
-  add_edge(x, y, p);
-  add_face(p);
-
-  add_edge(x, v, p);
-  add_face(p);
-
-
-  assert(num_edges(p) ==  8);
-  assert(num_halfedges(p) == 16);
-  assert(num_faces(p) == 4);
-}
-
 
 
 
@@ -131,7 +66,7 @@ int
 main()
 {
   concept_check_polyhedron<Polyhedron>();
-  runtime_check_halfedgegraph<Polyhedron>();
+
   std::cerr << "done\n";
   return 0;
 }

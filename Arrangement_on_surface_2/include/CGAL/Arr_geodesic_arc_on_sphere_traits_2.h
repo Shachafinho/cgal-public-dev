@@ -12,10 +12,6 @@
 // This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
 // WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 //
-// $URL$
-// $Id$
-//
-//
 // Author(s)     : Efi Fogel         <efif@post.tau.ac.il>
 
 #ifndef CGAL_ARR_GEODESIC_ARC_ON_SPHERE_TRAITS_2_H
@@ -568,7 +564,8 @@ public:
      */
     Comparison_result operator()(const X_monotone_curve_2& xc1,
                                  const X_monotone_curve_2& xc2,
-                                 const Point_2& p) const
+                                 const Point_2&
+                                 CGAL_precondition_code(p)) const
     {
       CGAL_precondition(!xc1.is_degenerate());
       CGAL_precondition(!xc2.is_degenerate());
@@ -710,7 +707,8 @@ public:
       const Kernel* kernel = m_traits;
       typename Kernel::Construct_opposite_direction_3 opposite_3 =
         kernel->construct_opposite_direction_3_object();
-      if (!kernel->equal_3_object()(opposite_3(p), r1)) return EQUAL;
+      Point_2 tmp1 = opposite_3(p);     // pacify msvc 10
+      if (!kernel->equal_3_object()(tmp1, r1)) return EQUAL;
 
       Sign xsign = Traits::x_sign(p);
       Sign ysign = Traits::y_sign(p);
@@ -941,7 +939,7 @@ public:
      */
     Comparison_result operator()(const Point_2& point,
                                  const X_monotone_curve_2& xcv,
-                                 Arr_curve_end ce) const
+                                 Arr_curve_end CGAL_precondition_code(ce)) const
     {
       CGAL_precondition(point.is_no_boundary());
       CGAL_precondition_code
@@ -984,9 +982,9 @@ public:
      * \pre xcv2 does not coincide with the vertical identification curve.
      */
     Comparison_result operator()(const X_monotone_curve_2& xcv1,
-                                 Arr_curve_end ce1,
+                                 Arr_curve_end CGAL_precondition_code(ce1),
                                  const X_monotone_curve_2& xcv2,
-                                 Arr_curve_end ce2) const
+                                 Arr_curve_end CGAL_precondition_code(ce2)) const
     {
       CGAL_precondition_code
         (const Point_2& p1 = (ce1 == ARR_MIN_END) ? xcv1.left() : xcv1.right(););
@@ -1070,9 +1068,11 @@ public:
      * \pre xcv1 does not coincide with the vertical identification curve.
      * \pre xcv2 does not coincide with the vertical identification curve.
      */
-    Comparison_result operator()(const X_monotone_curve_2& xcv1,
-                                 const X_monotone_curve_2& xcv2,
-                                 Arr_curve_end ce) const
+    Comparison_result operator()(const X_monotone_curve_2&
+                                   CGAL_precondition_code(xcv1),
+                                 const X_monotone_curve_2&
+                                   CGAL_precondition_code(xcv2),
+                                 Arr_curve_end CGAL_precondition_code(ce)) const
     {
       CGAL_precondition_code
         (const Point_2& p1 = (ce == ARR_MIN_END) ? xcv1.left() : xcv1.right(););
@@ -2431,10 +2431,12 @@ public:
     m_is_degenerate(false),
     m_is_empty(false)
   {
+    // MSVC 10 complains when the casting below is not present probably due
+    // to a bug (in MSVC 10).
     CGAL_precondition_code(Kernel kernel);
     CGAL_precondition(!kernel.equal_3_object()
                       (kernel.construct_opposite_direction_3_object()(m_source),
-                       m_target));
+                       (const typename Kernel::Direction_3&)(m_target)));
     m_normal = construct_normal_3(m_source, m_target);
     init();
   }

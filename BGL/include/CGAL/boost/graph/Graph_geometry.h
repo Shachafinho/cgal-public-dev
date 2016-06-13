@@ -87,6 +87,7 @@ void calculate_face_normals(const HalfedgeGraph& g,
   }
 }
 
+/// \cond SKIP_IN_MANUAL
 namespace internal {
 template<typename T>
 typename Kernel_traits<T>::Kernel::FT
@@ -98,6 +99,7 @@ dot(const T& t1, const T& t2)
 }
   
 } // internal
+/// \endcond
 
 template<typename HalfedgeGraph, 
          typename Position, 
@@ -197,7 +199,7 @@ triangle(const HalfedgeGraph& g,
          typename boost::graph_traits<HalfedgeGraph>::halfedge_descriptor h,
          const PositionMap& pm)
 {
-  BOOST_CONCEPT_ASSERT((HalfedgeGraphConcept<HalfedgeGraph>));
+  BOOST_CONCEPT_ASSERT((HalfedgeGraphConcept<HalfedgeGraph>)) CGAL_UNUSED;
 
   typedef typename boost::graph_traits<HalfedgeGraph>::vertex_descriptor vertex_descriptor;
   

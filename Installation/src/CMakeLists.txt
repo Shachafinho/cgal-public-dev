@@ -7,7 +7,12 @@ function (collect_cgal_library LIBRARY_NAME ADDITIONAL_FILES)
   # THEN collect *.cpp
   foreach (package ${CGAL_CONFIGURED_PACKAGES} )
     file(GLOB CGAL_LIBRARY_SOURCE_FILES_TMP ${package}/src/${LIBRARY_NAME}/*.cpp)
-    list(APPEND CGAL_LIBRARY_SOURCE_FILES ${CGAL_LIBRARY_SOURCE_FILES_TMP})
+    list(SORT CGAL_LIBRARY_SOURCE_FILES_TMP)
+    foreach(file ${CGAL_LIBRARY_SOURCE_FILES_TMP})
+      if(NOT ${file} MATCHES "/qrc_.*")
+        list(APPEND CGAL_LIBRARY_SOURCE_FILES ${file})
+      endif()
+    endforeach()
   endforeach()
 
   foreach(source ${CGAL_LIBRARY_SOURCE_FILES})
@@ -40,21 +45,13 @@ function (collect_cgal_library LIBRARY_NAME ADDITIONAL_FILES)
     ${CMAKE_CURRENT_BINARY_DIR}/all_files.cpp 
     ${rc_file}
     ${ADDITIONAL_FILES})
-#  add_library (${LIBRARY_NAME} ${CGAL_LIBRARY_SOURCE_FILES} ${rc_file} ${ADDITIONAL_FILES}) # builing not creating temporary all_files.cpp
   if(CGAL_SOVERSION AND CGAL_SONAME_VERSION)
     set_target_properties(${LIBRARY_NAME} PROPERTIES 
       VERSION "${CGAL_SOVERSION}" 
       SOVERSION "${CGAL_SONAME_VERSION}")
   endif()
 
-  if (NOT CGAL_AUTO_LINK_ENABLED )
-    get_target_property( ${LIBRARY_NAME}_LIBRARY_FULL_PATH ${LIBRARY_NAME} LOCATION  )
-  
-    set(${LIBRARY_NAME}_LIBRARY ${${LIBRARY_NAME}_LIBRARY_FULL_PATH} CACHE STRING "The ${LIBRARY_NAME} library" FORCE)
-    mark_as_advanced(${LIBRARY_NAME}_LIBRARY)
-  else(NOT CGAL_AUTO_LINK_ENABLED)
-    set(${LIBRARY_NAME}_LIBRARY)
-
+  if(CGAL_AUTO_LINK_ENABLED)
     set_target_properties( ${LIBRARY_NAME} PROPERTIES 
       OUTPUT_NAME_DEBUG          "${DEBUG_MANGLED_NAME}" 
       OUTPUT_NAME_RELEASE        "${RELEASE_MANGLED_NAME}" 
@@ -67,16 +64,27 @@ function (collect_cgal_library LIBRARY_NAME ADDITIONAL_FILES)
       add_custom_command(TARGET ${LIBRARY_NAME} POST_BUILD COMMAND if exist \"$(TargetDir)$(TargetName).pdb\" copy /Y \"$(TargetDir)$(TargetName).pdb\" \"$(TargetDir)..\" )
       add_custom_command(TARGET ${LIBRARY_NAME} POST_BUILD COMMAND if exist \"$(SolutionDir)lib\\$(ConfigurationName)\\$(TargetName).lib\" copy /Y \"$(SolutionDir)lib\\$(ConfigurationName)\\$(TargetName).lib\" \"$(SolutionDir)lib\" )
     endif()
-  endif(NOT CGAL_AUTO_LINK_ENABLED)
+  endif()
 
-  install(TARGETS ${LIBRARY_NAME}
-          RUNTIME DESTINATION ${CGAL_INSTALL_BIN_DIR}
-          LIBRARY DESTINATION ${CGAL_INSTALL_LIB_DIR}
-          ARCHIVE DESTINATION ${CGAL_INSTALL_LIB_DIR})
+  install(TARGETS ${LIBRARY_NAME} EXPORT ${LIBRARY_NAME}Exports
+    RUNTIME DESTINATION "${CGAL_INSTALL_BIN_DIR}"
+    LIBRARY DESTINATION "${CGAL_INSTALL_LIB_DIR}"
+    ARCHIVE DESTINATION "${CGAL_INSTALL_LIB_DIR}")
+  install(EXPORT ${LIBRARY_NAME}Exports
+    DESTINATION "${CGAL_INSTALL_CMAKE_DIR}"
+    NAMESPACE CGAL::)
+
+  # We have to call configure_file twice to force double expansion of variables.
+  configure_file("${CGAL_MODULES_DIR}/CGALLibConfig.cmake.in"
+    "${CMAKE_BINARY_DIR}/${LIBRARY_NAME}LibConfig.cmake" @ONLY)
+  configure_file("${CMAKE_BINARY_DIR}/${LIBRARY_NAME}LibConfig.cmake"
+    "${CMAKE_BINARY_DIR}/${LIBRARY_NAME}LibConfig.cmake" @ONLY)
+  install(FILES "${CMAKE_BINARY_DIR}/${LIBRARY_NAME}LibConfig.cmake" DESTINATION ${CGAL_INSTALL_CMAKE_DIR})
 endfunction()
 
 function( configure_component DIR COMPONENT )
-  option( WITH_${COMPONENT} "Enable CGAL component ${COMPONENT}" ON)
+  set(enabled_by_default ON)
+  option( WITH_${COMPONENT} "Enable CGAL component ${COMPONENT}" ${enabled_by_default})
   if ( WITH_${COMPONENT})
     add_subdirectory( ${DIR} ${COMPONENT} )
   endif()
@@ -116,9 +124,11 @@ set(CGAL_CONFIGURED_LIBRARIES "")
  
 foreach(package ${CGAL_CONFIGURED_PACKAGES}) 
   file(GLOB CONFIGURED_LIBS_IN_PACKAGE ${package}/src/CGAL_*/CMakeLists.txt)
+  list(SORT CONFIGURED_LIBS_IN_PACKAGE)
   foreach (libconfigfile ${CONFIGURED_LIBS_IN_PACKAGE})
-    string(REPLACE "${package}/src/" "" libconfigfile ${libconfigfile})
-    string(REPLACE "//CMakeLists.txt" "" CGAL_CONFIGURED_LIBRARY_NAME ${libconfigfile})
+    get_filename_component(CGAL_CONFIGURED_LIBRARY_NAME ${libconfigfile} PATH)
+    get_filename_component(CGAL_CONFIGURED_LIBRARY_NAME ${CGAL_CONFIGURED_LIBRARY_NAME} NAME)
+
     if (NOT ${CGAL_CONFIGURED_LIBRARY_NAME} STREQUAL "CGAL")
 
      message(STATUS "Sources for CGAL component library '${CGAL_CONFIGURED_LIBRARY_NAME}' detected")
@@ -162,6 +172,26 @@ endif()
 list(REMOVE_DUPLICATES CGAL_CONFIGURED_LIBRARIES)
 list(SORT CGAL_CONFIGURED_LIBRARIES)
 cache_set(CGAL_CONFIGURED_LIBRARIES "${CGAL_CONFIGURED_LIBRARIES}")
+
+# CGAL_CONFIGURED_LIBRARIES is a virtually useless variable, because
+# we do not know if those components actually created a target.  It
+# might seem bad that we hardcode the target names here, but they have
+# always been hardcoded in the CGALConfig files, so we do not make it
+# any worse. We can also not use export(EXPORT) since that is only
+# available in newer CMake versions.
+set(CGAL_ACTUAL_CONFIGURED_LIBRARIES "")
+macro(CGAL_add_if_target TARGET)
+  if(TARGET ${TARGET})
+    list(APPEND CGAL_ACTUAL_CONFIGURED_LIBRARIES ${TARGET})
+  endif()
+endmacro()
+
+CGAL_add_if_target(CGAL)
+CGAL_add_if_target(CGAL_Core)
+CGAL_add_if_target(CGAL_ImageIO)
+CGAL_add_if_target(CGAL_Qt5)
+
+export(TARGETS ${CGAL_ACTUAL_CONFIGURED_LIBRARIES} NAMESPACE CGAL:: FILE "${CMAKE_BINARY_DIR}/CGALExports.cmake")
 
 message(STATUS "Sources for CGAL component libraries '${CGAL_CONFIGURED_LIBRARIES}' detected")
 

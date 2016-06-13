@@ -33,6 +33,7 @@
 #include <list>
 #include <vector>
 #include <cassert>
+#include <CGAL/use.h>
 #include <CGAL/utility.h>
 #include <CGAL/iterator.h>
 #include <CGAL/algorithm.h>
@@ -46,7 +47,7 @@
 #include <CGAL/Circulator/Circulator_adapters.h>
 #include <CGAL/function_objects.h>
 #include <CGAL/tuple.h>
-#include <boost/static_assert.hpp>
+#include <CGAL/assertions.h>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/typeof/typeof.hpp>
 
@@ -8113,7 +8114,8 @@ void test_tuple(){
   typedef CGAL::cpp11::tuple<int,int> T1;
   typedef CGAL::cpp11::tuple<int,My_to_int,int,int> T2;
   
-  
+  CGAL_USE_TYPE(T0);
+  CGAL_USE_TYPE(T2);
   CGAL_static_assertion( CGAL::cpp11::tuple_size<T0>::value == 0 );
   CGAL_static_assertion( CGAL::cpp11::tuple_size<T1>::value == 2 );
   CGAL_static_assertion( CGAL::cpp11::tuple_size<T2>::value == 4 );
@@ -8203,15 +8205,15 @@ void test_make_sorted_pair() {
   assert(p3==p4);
   int i=2;
   assert( CGAL::make_sorted_pair(1,i) == std::make_pair(1,i) );
-  BOOST_STATIC_ASSERT( (boost::is_same<
+  CGAL_static_assertion( (boost::is_same<
                           BOOST_TYPEOF(CGAL::make_sorted_pair<long>(1L,i)),
                           std::pair<long,long> >::value) );
   assert( (CGAL::make_sorted_pair<long>(i,1L) == std::pair<long,long>(1L,2L)) );
 
-  BOOST_STATIC_ASSERT( (boost::is_same<
+  CGAL_static_assertion( (boost::is_same<
                           BOOST_TYPEOF(CGAL::make_sorted_pair<double>(1,2L)),
                           std::pair<double,double> >::value) );
-  BOOST_STATIC_ASSERT( (boost::is_same<
+  CGAL_static_assertion( (boost::is_same<
                           BOOST_TYPEOF(CGAL::make_sorted_pair<int>(1,2L)),
                           std::pair<int,int> >::value) );
 }

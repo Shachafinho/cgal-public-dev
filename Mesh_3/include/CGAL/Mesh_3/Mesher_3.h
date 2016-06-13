@@ -32,6 +32,7 @@
 #include <CGAL/Mesh_3/Dump_c3t3.h>
 
 #include<CGAL/Mesh_3/Refine_facets_3.h>
+#include<CGAL/Mesh_3/Refine_facets_manifold_base.h>
 #include<CGAL/Mesh_3/Refine_cells_3.h>
 #include <CGAL/Mesh_3/Refine_tets_visitor.h>
 #include <CGAL/Mesher_level_visitors.h>
@@ -42,7 +43,7 @@
 #endif
 
 #include <CGAL/Mesh_3/Concurrent_mesher_config.h>
-#include <CGAL/Timer.h>
+#include <CGAL/Real_timer.h>
 
 #ifdef CGAL_MESH_3_PROFILING
   #include <CGAL/Mesh_3/Profiling_tools.h>
@@ -160,6 +161,8 @@ public:
   //-------------------------------------------------------
   // Mesher_levels
   //-------------------------------------------------------
+  // typedef Refine_facets_manifold_base<Rf_base>      Rf_manifold_base;
+
   /// Facets mesher level
   typedef Refine_facets_3<
       Triangulation,
@@ -167,7 +170,9 @@ public:
       MeshDomain,
       C3T3,
       Null_mesher_level,
-      Concurrency_tag>                              Facets_level;
+      Concurrency_tag,
+      Refine_facets_manifold_base
+    >                                               Facets_level;
 
   /// Cells mesher level
   typedef Refine_cells_3<
@@ -306,7 +311,7 @@ template<class C3T3, class MC, class MD>
 double
 Mesher_3<C3T3,MC,MD>::refine_mesh(std::string dump_after_refine_surface_prefix)
 {
-  CGAL::Timer timer;
+  CGAL::Real_timer timer;
   timer.start();
   double elapsed_time = 0.;
 
@@ -481,19 +486,16 @@ initialize()
   //=====================================
   // Bounding box estimation
   //=====================================
-  typedef std::vector<std::pair<Point, Index> > Points_vector;
-  Points_vector random_points_on_surface;
-  r_oracle_.construct_initial_points_object()(
-    std::back_inserter(random_points_on_surface), 1000);
-  typename Points_vector::const_iterator
-    it = random_points_on_surface.begin(),
-    it_end = random_points_on_surface.end();
-  Bbox_3 estimated_bbox = it->first.bbox();
-  ++it;
-  for( ; it != it_end ; ++it)
-    estimated_bbox = estimated_bbox + it->first.bbox();
+#if defined(CGAL_LINKED_WITH_TBB) || \
+    defined(CGAL_SEQUENTIAL_MESH_3_ADD_OUTSIDE_POINTS_ON_A_FAR_SPHERE)
 
-  Base::set_bbox(estimated_bbox);
+#ifndef CGAL_SEQUENTIAL_MESH_3_ADD_OUTSIDE_POINTS_ON_A_FAR_SPHERE
+  if(boost::is_convertible<Concurrency_tag, Parallel_tag>::value)
+#endif // If that macro is defined, then estimated_bbox must be initialized
+  {
+    Base::set_bbox(r_oracle_.bbox());
+  }
+#endif // CGAL_LINKED_WITH_TBB||"sequential use far sphere"
 
   //========================================
   // Initialization: parallel or sequential
@@ -510,7 +512,7 @@ initialize()
 
     if (r_c3t3_.number_of_far_points() == 0 && r_c3t3_.number_of_facets() == 0)
     {
-      const Bbox_3 &bbox = estimated_bbox;
+      const Bbox_3 &bbox = r_oracle_.bbox();
 
       // Compute radius for far sphere
       const double xdelta = bbox.xmax()-bbox.xmin();
@@ -528,7 +530,7 @@ initialize()
 #  endif
       Random_points_on_sphere_3<Point> random_point(radius);
       const int NUM_PSEUDO_INFINITE_VERTICES = static_cast<int>(
-        tbb::task_scheduler_init::default_num_threads()
+        float(tbb::task_scheduler_init::default_num_threads())
         * Concurrent_mesher_config::get().num_pseudo_infinite_vertices_per_core);
       for (int i = 0 ; i < NUM_PSEUDO_INFINITE_VERTICES ; ++i, ++random_point)
         r_c3t3_.add_far_point(*random_point + center);
@@ -573,6 +575,7 @@ initialize()
 
       // Compute radius for far sphere
       //const Bbox_3 &bbox = r_c3t3_.bbox();
+      CGAL_assertion(is_estimated_bbox_initialized);
       const Bbox_3 &bbox = estimated_bbox;
       const double xdelta = bbox.xmax()-bbox.xmin();
       const double ydelta = bbox.ymax()-bbox.ymin();

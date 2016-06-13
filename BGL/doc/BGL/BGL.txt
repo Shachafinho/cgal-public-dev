@@ -9,7 +9,7 @@ namespace CGAL {
 
 Many geometric data structures can be interpreted as graphs as they consist of
 vertices and edges. This is the case for the halfedge data structure,
-for the polyhedron, for the arrangement, and for the 2D triangulation classes. With means of
+for the polyhedral surface, for the arrangement, and for the 2D triangulation classes. With means of
 duality one can also interpret faces as vertices and edges between adjacent
 faces as edges of the dual graph.
 
@@ -28,8 +28,8 @@ sequence of halfedges around vertices and around faces.
 This chapter is organized as follows. Section \ref BGLA  present
 the ideas of \sc{Bgl} in a nutshell. Section \ref BGLHeader explains
 where to find header files and the chosen naming conventions, as we blend two
-different libraries. The three following sections give examples for
-how the polyhedron, the arrangement, and the 2D triangulation classes
+different libraries. The four  following sections give examples for
+how the surface mesh, the polyhedron, the arrangement, and the 2D triangulation classes
 are adapted to \sc{Bgl}. Finally, Section \ref BGLExtensions introduces
 the `HalfedgeGraph` which is an extension to the graph concepts of the \sc{Bgl}.
 
@@ -165,7 +165,28 @@ The %Euler operations are in the namespace `CGAL::Euler`, as the function `remov
 the same time a low level and an %Euler operation.
 Concerning the naming conventions we have to use those of \sc{Bgl}, as we have to fulfill the requirements of the concepts defined in \sc{Bgl}.
 
-\section BGLPolyhedral Polyhedral Surfaces as Model of the Boost Graph Concept
+\section BGLSurface_mesh The Class Surface_mesh as Model of the Boost Graph Concept
+
+The class `Surface_mesh` is a model of most of \sc{Bgl} graph
+concepts as well as the concepts provided by \cgal. A full list can
+be found in the documentation of `boost::graph_traits`. The examples show how to use some of
+the \sc{Bgl} algorithms with `Surface_mesh` and show how to use
+the concepts provided by \cgal to implement a simple algorithm.
+
+\subsection BGLExampleMinimumSpanningTreeofaSurfaceMesh Example: Minimum Spanning Tree of a Surface_mesh
+
+The following example program computes the minimum spanning tree on a surface mesh.
+More examples can be found in the chapters
+\ref PkgSurfaceMeshSimplificationSummary, \ref PkgSurfaceSegmentationSummary, and \ref PkgSurfaceMeshDeformationSummary.
+
+The surface mesh class uses integer indices to address vertices and edges,
+and it comes with a built-in property mechanism that maps nicely on the \sc{Bgl}.
+
+\cgalExample{BGL_surface_mesh/prim.cpp}
+
+
+
+\section BGLPolyhedral The Class Polyhedron_3 as Model of the Boost Graph Concept
 
 The class `Polyhedron_3` is a model of most of \sc{Bgl} graph
 concepts as well as the concepts provided by \cgal. A full list can
@@ -345,7 +366,7 @@ with an unsigned integer, marking the discover time of the face and use a
 breadth-first-search visitor to obtain these times and update the faces
 accordingly:
 
-\cgalExample{BGL_arrangement_2/dual.cpp}
+\cgalExample{BGL_arrangement_2/arrangement_dual.cpp}
 
 \section BGLExtensions Extensions of the BGL
 
@@ -406,6 +427,31 @@ are called <em>%Euler Operations</em>. These are high level operations such
 as adding a center vertex to a face, which means also adding halfedges
 and faces, and updating incidence information. The %Euler operations 
 enable manipulating models of `MutableFaceGraph`.
+
+
+\subsection BGLDual The Dual Graph
+
+The <em>dual graph</em> of a `FaceGraph` `G` is a graph that has a vertex for each
+face of `G`. The dual graph has an edge whenever two faces of `G` are
+separated from each other by an edge. Thus, each edge `e` of `G` has a
+corresponding dual edge, the edge that connects the two faces on
+either side of `e`.
+
+The class template `Dual` is an adaptor that creates the dual view of
+a `FaceGraph`. Faces of the original graph correspond to vertices in
+the `Dual` and vice versa.
+
+The dual graph comes in handy when one wants to compute the connected
+component of a surface mesh.
+
+Note that border edges in a `Dual` have the `null_face` of the
+original graph as either source or target. This is unusual and might
+break other algorithms since edges are always assumed to have non-null
+vertices as a source and target. It is possible to filter border edges
+using `boost::filtered_graph` as shown in the following example.
+
+\cgalExample{BGL_surface_mesh/surface_mesh_dual.cpp}
+
 
 \subsection BGLExampleIncidentVertices Example: Finding Incident Vertices in a HalfedgeGraph
 

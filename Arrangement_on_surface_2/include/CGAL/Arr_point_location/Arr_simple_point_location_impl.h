@@ -128,7 +128,7 @@ _base_vertical_ray_shoot(const Point_2& p, bool shoot_up) const
   const typename Dcel::Vertex*    vs;   // The current edge source
   const typename Dcel::Vertex*    vt;   // The current edge target.
   Comparison_result               res_s;
-  Comparison_result               res;
+  Comparison_result               res = EQUAL;
   Comparison_result               y_res;
   bool                            in_x_range;
   const typename Dcel::Halfedge*  closest_he = NULL; // The closest so far.

@@ -27,7 +27,7 @@
 
 #include <CGAL/Mesh_3/config.h>
 
-#include <CGAL/Timer.h>
+#include <CGAL/Real_timer.h>
 #include <CGAL/Mesh_3/C3T3_helpers.h>
 #include <CGAL/Mesh_3/Triangulation_helpers.h>
 #include <CGAL/Origin.h>
@@ -46,8 +46,6 @@
 #include <list>
 #include <limits>
 
-#include <boost/lambda/lambda.hpp>
-#include <boost/lambda/bind.hpp>
 #include <boost/type_traits/is_convertible.hpp>
 
 #ifdef CGAL_LINKED_WITH_TBB
@@ -623,7 +621,7 @@ private:
   MoveFunction move_function_;
   Sizing_field sizing_field_;
   double time_limit_;
-  CGAL::Timer running_time_;
+  CGAL::Real_timer running_time_;
 
   bool do_freeze_;
   mutable Nb_frozen_points_type nb_frozen_points_;
@@ -668,7 +666,7 @@ Mesh_global_optimizer(C3T3& c3t3,
 
 #ifdef CGAL_MESH_3_OPTIMIZER_VERBOSE
   std::cerr << "Fill sizing field...";
-  CGAL::Timer timer;
+  CGAL::Real_timer timer;
   timer.start();
 #endif
 
@@ -735,7 +733,7 @@ operator()(int nb_iterations, Visitor visitor)
     //Pb with Freeze : sometimes a few vertices continue moving indefinitely
     //if the nb of moving vertices is < 1% of total nb AND does not decrease
     if(do_freeze_
-      && nb_vertices_moved < 0.005 * initial_vertices_nb
+      && nb_vertices_moved < 0.005 * double(initial_vertices_nb)
       && nb_vertices_moved == moving_vertices.size())
     {
       // we should stop because we are
@@ -761,8 +759,7 @@ operator()(int nb_iterations, Visitor visitor)
     % initial_vertices_nb
     % (running_time_.time() - step_begin)
     % (running_time_.time() / (i+1))
-    % sum_moves_
-    << std::endl;
+    % sum_moves_;
     step_begin = running_time_.time();
 #endif
 
@@ -772,6 +769,10 @@ operator()(int nb_iterations, Visitor visitor)
     if(check_convergence())
       break;
   }
+#ifdef CGAL_MESH_3_OPTIMIZER_VERBOSE
+  std::cerr << std::endl;
+#endif
+
   running_time_.stop();
 
 #ifdef CGAL_MESH_3_PROFILING
@@ -1033,8 +1034,6 @@ bool
 Mesh_global_optimizer<C3T3,Md,Mf,V_>::
 check_convergence() const
 {
-  namespace bl = boost::lambda;
-
   FT sum(0);
   for( typename std::multiset<FT>::const_iterator
        it = big_moves_.begin(), end = big_moves_.end() ; it != end ; ++it )
@@ -1042,7 +1041,7 @@ check_convergence() const
     sum += CGAL::sqrt(*it);
   }
 
-  FT average_move = sum/big_moves_size_;/*even if set is not full, divide*/
+  FT average_move = sum/FT(big_moves_size_);/*even if set is not full, divide*/
        /*by max size so that if only 1 point moves, it goes to 0*/
 #ifdef CGAL_MESH_3_OPTIMIZER_VERBOSE
   sum_moves_ = average_move;

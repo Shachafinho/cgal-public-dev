@@ -20,6 +20,11 @@
 #ifndef CGAL_BOOST_GRAPH_GRAPH_TRAITS_HALFEDGEDS_H
 #define CGAL_BOOST_GRAPH_GRAPH_TRAITS_HALFEDGEDS_H
 
+#include <functional>
+
+// include this to avoid a VC15 warning
+#include <CGAL/boost/graph/named_function_params.h>
+
 #include <boost/config.hpp>
 #include <boost/iterator/iterator_adaptor.hpp>
 #include <boost/iterator/transform_iterator.hpp>
@@ -30,7 +35,6 @@
 
 #include <CGAL/basic.h>
 #include <CGAL/boost/graph/iterator.h>
-
 #include <CGAL/Handle_hash_function.h>
 
 #ifndef CGAL_NO_DEPRECATED_CODE
@@ -131,6 +135,10 @@ struct HDS_edge {
   HDS_edge
   opposite_prev() { return HDS_edge(halfedge_->opposite()->prev()); }
 
+  friend  std::size_t hash_value(const HDS_edge&  i)
+  {
+    return hash_value(i.halfedge());
+  }
 
 private:
   Halfedge_handle halfedge_;
@@ -216,5 +224,32 @@ public:
 
 
 } //namespace CGAL
+
+
+namespace std {
+
+#if defined(BOOST_MSVC)
+#  pragma warning(push)
+#  pragma warning(disable:4099) // For VC10 it is class hash 
+#endif
+
+#ifndef CGAL_CFG_NO_STD_HASH
+
+  template <typename H>
+  struct hash<CGAL::internal::HDS_edge<H> > {
+    std::size_t operator()(const CGAL::internal::HDS_edge<H>& e) const
+    {
+      std::hash<H> fct;
+      return fct(e.halfedge());
+    }
+  };
+
+#endif // CGAL_CFG_NO_STD_HASH
+
+#if defined(BOOST_MSVC)
+#  pragma warning(pop)
+#endif
+
+} // namespace std
 
 #endif // CGAL_BOOST_GRAPH_GRAPH_TRAITS_HALFEDGEDS_H

@@ -3,9 +3,9 @@
  * Copyright (c) 1995-2004 Exact Computation Project
  * All rights reserved.
  *
- * This file is part of CORE (http://cs.nyu.edu/exact/core/).
+ * This file is part of CGAL (www.cgal.org).
  * You can redistribute it and/or modify it under the terms of the GNU
- * General Public License as published by the Free Software Foundation,
+ * Lesser General Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  *
  * Licensees holding a valid commercial license may use this file in
@@ -94,7 +94,8 @@ public:
     mpz_clear(mp);
   }
 
-  CORE_MEMORY(BigIntRep)
+  CGAL_CORE_EXPORT CORE_NEW(BigIntRep)
+  CGAL_CORE_EXPORT CORE_DELETE(BigIntRep)
 
   mpz_srcptr get_mp() const {
     return mp;
@@ -558,5 +559,8 @@ inline BigInt randomize(const BigInt& a) {
 }
 //@}
 
+
+
 } //namespace CORE
+
 #endif // _CORE_BIGINT_H_

@@ -21,13 +21,15 @@
 
 #ifndef CGAL_QT_DEMOS_MAIN_WINDOW_H
 #define CGAL_QT_DEMOS_MAIN_WINDOW_H
+
 #include <iostream>
 #include <QVector>
 #include <QMainWindow>
 #include <QDragEnterEvent>
 #include <QDropEvent>
-#include <CGAL/auto_link/Qt4.h>
-#include <CGAL/export/Qt4.h>
+
+#include <CGAL/auto_link/Qt.h>
+#include <CGAL/export/Qt.h>
 #include <CGAL/Qt/resources.h>
 
 // forward declaration
@@ -42,7 +44,7 @@ namespace Qt {
 // forward declaration
 class GraphicsViewNavigation;
 
-class CGAL_QT4_EXPORT DemosMainWindow : public QMainWindow 
+class CGAL_QT_EXPORT DemosMainWindow : public QMainWindow 
 {
   Q_OBJECT
 
@@ -65,7 +67,7 @@ public:
 public:
   unsigned int maxNumberOfRecentFiles() const ;
 
-public slots:
+public Q_SLOTS:
   void setMaxNumberOfRecentFiles(const unsigned int);
 
 private:
@@ -75,11 +77,13 @@ private:
 
 protected:
   DemosMainWindow (QWidget * parent = 0, ::Qt::WindowFlags flags = 0 );
+  ~DemosMainWindow();
   void setupStatusBar();
   void addNavigation(QGraphicsView*);
   void setupOptionsMenu(QMenu* menu  = 0);
   void addAboutCGAL(QMenu* menu  = 0);
   void addAboutDemo(QString htmlResourceName, QMenu* menu  = 0);
+  void setupExportSVG(QAction*, QGraphicsView*);
 
   void addRecentFiles(QMenu* menu, QAction* insertBefore = 0);
 
@@ -87,17 +91,19 @@ protected:
   void readState(QString groupname = "MainWindow",
 		 Options what_to_save = Options(Size|State));
 
-protected slots:
+protected Q_SLOTS:
   void setUseAntialiasing(bool checked);
   void setUseOpenGL(bool checked);
   void popupAboutCGAL();
   void popupAboutDemo();
 
+  void exportSVG();
+
   void openRecentFile_aux();
   void addToRecentFiles(QString fileName);
   void updateRecentFileActions();
 
-signals:
+Q_SIGNALS:
   void openRecentFile(QString filename);
 
 protected:
@@ -121,5 +127,9 @@ protected:
 } // namespace CGAL
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(CGAL::Qt::DemosMainWindow::Options)
+
+#ifdef CGAL_HEADER_ONLY
+#include <CGAL/Qt/DemosMainWindow_impl.h>
+#endif // CGAL_HEADER_ONLY
 
 #endif // CGAL_QT_DEMOS_MAIN_WINDOW_H

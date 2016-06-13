@@ -7,7 +7,7 @@ namespace CGAL {
 The class `Periodic_triangulation_3` represents a 3-dimensional 
 triangulation of a point set in \f$ \mathbb T_c^3\f$. 
 
-\tparam PT must be a model of the `Periodic_3DelaunayTriangulationTraits_3` concept. 
+\tparam PT must be a model of the `Periodic_3TriangulationTraits_3` concept.
 
 \tparam TDS must be a model of  `TriangulationDataStructure_3` concept 
 with some additional  functionality in cells and vertices. 
@@ -241,8 +241,6 @@ typedef unspecified_type Periodic_point_iterator;
 /// @{
 
 /*!
-\ingroup PkgPeriodic3Triangulation3Enums
-
 The enum `Locate_type` is defined by `Periodic_3_triangulation_3` to
 specify which case occurs when locating a point in the
 triangulation. If the triangulation does not contain any points
@@ -254,8 +252,6 @@ triangulation. If the triangulation does not contain any points
 enum Locate_type {VERTEX=0, EDGE, FACET, CELL, EMPTY};
 
 /*!
-\ingroup PkgPeriodic3Triangulation3Enums
-
 The enum `Iterator_type` is defined by `Periodic_3_triangulation_3` to
 specify the behavior of geometric iterators.
 

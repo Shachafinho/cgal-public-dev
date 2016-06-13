@@ -24,9 +24,9 @@
 #include <CGAL/Kd_tree_rectangle.h>
 #include <CGAL/Euclidean_distance.h> //for default distance specialization
 #include <CGAL/property_map.h>
+#include <CGAL/assertions.h>
 
 #include <boost/mpl/has_xxx.hpp>
-#include <boost/static_assert.hpp>
 #include <boost/type_traits/is_same.hpp>
 
 namespace CGAL{
@@ -72,7 +72,7 @@ template <class Point_with_info,class PointPropertyMap,class Base_traits>
 class Search_traits_adapter : public Base_traits{
   PointPropertyMap ppmap;
 
-  BOOST_STATIC_ASSERT( ( boost::is_same< boost::lvalue_property_map_tag,
+  CGAL_static_assertion( ( boost::is_same< boost::lvalue_property_map_tag,
                            typename boost::property_traits<PointPropertyMap>::category
                          >::value ) );
 public:
@@ -86,6 +86,8 @@ public:
   typedef typename Base_traits::Cartesian_const_iterator_d      Cartesian_const_iterator_d;
   typedef Point_with_info                                       Point_d;
   typedef typename Base_traits::FT                              FT;
+  typedef typename Base_traits::Dimension                       Dimension;
+  
 
   struct Construct_cartesian_const_iterator_d: public Base_traits::Construct_cartesian_const_iterator_d{
     PointPropertyMap ppmap;
@@ -128,7 +130,7 @@ class Distance_adapter : public Base_distance {
   PointPropertyMap ppmap;
   typedef typename Base_distance::FT FT;
 
-  BOOST_STATIC_ASSERT( ( boost::is_same< boost::lvalue_property_map_tag,
+  CGAL_static_assertion( ( boost::is_same< boost::lvalue_property_map_tag,
                            typename boost::property_traits<PointPropertyMap>::category
                          >::value ) );
 public:
@@ -149,16 +151,27 @@ public:
     return this->transformed_distance(p1,get(ppmap,p2));
   }
 
-  template <class FT>
-  FT min_distance_to_rectangle(const Query_item& p, const CGAL::Kd_tree_rectangle<FT>& b) const
+  template <class FT,class Dimension>
+  FT min_distance_to_rectangle(const Query_item& p, const CGAL::Kd_tree_rectangle<FT,Dimension>& b) const
   {
     return static_cast<const Base_distance*>(this)->min_distance_to_rectangle(p,b);
   }
 
-  template <class FT>
-  FT max_distance_to_rectangle(const Query_item& p,const CGAL::Kd_tree_rectangle<FT>& b) const
+  template <class FT,class Dimension>
+  FT min_distance_to_rectangle(const Query_item& p, const CGAL::Kd_tree_rectangle<FT,Dimension>& b,std::vector<FT>& dists) 
+  {
+    return static_cast<Base_distance*>(this)->min_distance_to_rectangle(p,b,dists);
+  }
+
+  template <class FT,class Dimension>
+  FT max_distance_to_rectangle(const Query_item& p,const CGAL::Kd_tree_rectangle<FT,Dimension>& b) const
   {
     return static_cast<const Base_distance*>(this)->max_distance_to_rectangle(p,b);
+  }  
+  template <class FT,class Dimension>
+  FT max_distance_to_rectangle(const Query_item& p,const CGAL::Kd_tree_rectangle<FT,Dimension>& b,std::vector<FT>& dists)
+  {
+    return static_cast<Base_distance*>(this)->max_distance_to_rectangle(p,b,dists);
   }  
 };
 

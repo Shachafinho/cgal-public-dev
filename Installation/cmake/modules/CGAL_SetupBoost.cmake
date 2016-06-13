@@ -1,9 +1,28 @@
 if ( NOT CGAL_Boost_Setup )
 
   include(CGAL_TweakFindBoost)
-  # In the documentation, we say we require Boost-1.39, but technically we
-  # require 1.33.1. Some packages may require more recent versions, though.
-  find_package( Boost 1.33.1 REQUIRED thread system )
+
+  set ( CGAL_requires_Boost_libs TRUE )
+  if ( DEFINED  MSVC_VERSION AND "${MSVC_VERSION}" GREATER 1800)
+    set ( CGAL_requires_Boost_libs FALSE )
+  endif()
+  if ( CMAKE_COMPILER_IS_GNUCXX
+      AND(
+        #GCC 4.8+ with c++11 on
+        ( NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.8
+          AND CMAKE_CXX_FLAGS MATCHES "\\-std=(c|gnu)\\+\\+[01][14yxz]")
+        #GCC 6.0+ without c++03 on
+        OR ( NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS 6.0
+             AND NOT CMAKE_CXX_FLAGS MATCHES "\\-std=(c|gnu)\\+\\+[90][83]")
+      ) )
+    set ( CGAL_requires_Boost_libs FALSE )
+  endif()
+
+  if (CGAL_requires_Boost_libs)
+    find_package( Boost 1.48 REQUIRED thread system )
+  else()
+    find_package( Boost 1.48 REQUIRED )
+  endif()
 
   if(Boost_FOUND)
     if(DEFINED Boost_DIR AND NOT Boost_DIR)

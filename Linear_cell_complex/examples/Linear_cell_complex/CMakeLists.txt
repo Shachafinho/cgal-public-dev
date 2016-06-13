@@ -3,21 +3,19 @@
 
 project( Linear_cell_complex_examples )
 
-cmake_minimum_required(VERSION 2.6.2)
-if("${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION}" VERSION_GREATER 2.8.3)
-  cmake_policy(VERSION 2.8.4)
-else()
-  cmake_policy(VERSION 2.6)
+cmake_minimum_required(VERSION 2.8.11)
+if(POLICY CMP0043)
+  cmake_policy(SET CMP0043 OLD)
 endif()
 
-# If you want to visualize a linear cell complex, there are 2 viewers
-# based on qt and vtk. Just uncomment the corresponding lines
-# find_package(CGAL QUIET COMPONENTS Core Qt4)
+# If you want to visualize a linear cell complex, you can use the following viewer
+# based on qt. Just uncomment the following two lines, plus the lines qt5_use_modules below
+
+# find_package(CGAL COMPONENTS Qt5)
 # include("CMakeLCCViewerQt.inc")
-# include("CMakeLCCViewerVtk.inc")
 
 # If you don't want to visualize, use the following line (otherwise comment it)
-find_package(CGAL QUIET COMPONENTS Core)
+find_package(CGAL QUIET)
 
 # For Gprof.
 # ADD_DEFINITIONS("-pg")
@@ -27,7 +25,6 @@ find_package(CGAL QUIET COMPONENTS Core)
 # add_definition(-DCGAL_DISABLE_ROUNDING_MATH_CHECK)
 
 if ( CGAL_FOUND )
-
   include( ${CGAL_USE_FILE} )
 
   include( CGAL_CreateSingleSourceCGALProgram )
@@ -41,20 +38,17 @@ if ( CGAL_FOUND )
                   "linear_cell_complex_3_with_mypoint.cpp" )
 
   create_single_source_cgal_program("plane_graph_to_lcc_2.cpp")
-
-  add_executable(linear_cell_complex_3_triangulation
-                          linear_cell_complex_3_triangulation.cpp)
-  target_link_libraries(linear_cell_complex_3_triangulation ${CGAL_LIBRARIES}
-                                   ${CGAL_3RD_PARTY_LIBRARIES}
-                                   ${MAP_VIEWER_LIBRARIES})
+  create_single_source_cgal_program("linear_cell_complex_3_attributes_management.cpp")
 
   add_executable(voronoi_2 voronoi_2.cpp)
   target_link_libraries(voronoi_2 ${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBRARIES}
                                   ${MAP_VIEWER_LIBRARIES})
+  # qt5_use_modules(voronoi_2 ${MAP_VIEWER_MODULES})
 
   add_executable(voronoi_3 voronoi_3.cpp)
   target_link_libraries(voronoi_3 ${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBRARIES}
                                   ${MAP_VIEWER_LIBRARIES})
+  # qt5_use_modules(voronoi_3 ${MAP_VIEWER_MODULES})
 
 else()
 

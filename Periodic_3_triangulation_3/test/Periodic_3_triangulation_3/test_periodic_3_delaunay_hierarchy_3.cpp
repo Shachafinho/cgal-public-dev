@@ -22,13 +22,15 @@
 #include <iostream>
 #include <fstream>
 
+#include <CGAL/Timer.h>
+
 #include <CGAL/Periodic_3_Delaunay_triangulation_3.h>
 #include <CGAL/Periodic_3_triangulation_hierarchy_3.h>
-#include <CGAL/Periodic_3_triangulation_traits_3.h>
+#include <CGAL/Periodic_3_Delaunay_triangulation_traits_3.h>
 
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 typedef CGAL::Exact_predicates_inexact_constructions_kernel          K1;
-typedef CGAL::Periodic_3_triangulation_traits_3<K1>                  PTT1;
+typedef CGAL::Periodic_3_Delaunay_triangulation_traits_3<K1>                  PTT1;
 typedef CGAL::Periodic_3_triangulation_ds_vertex_base_3<>            DSVB1;
 typedef CGAL::Periodic_3_triangulation_ds_cell_base_3<>              DSCB1;
 typedef CGAL::Triangulation_vertex_base_3<PTT1,DSVB1>                VBB1;
@@ -41,7 +43,7 @@ template class CGAL::Periodic_3_triangulation_hierarchy_3<PDT1>;
 
 #include <CGAL/Exact_predicates_exact_constructions_kernel.h>
 typedef CGAL::Exact_predicates_exact_constructions_kernel            K2;
-typedef CGAL::Periodic_3_triangulation_traits_3<K2>                  PTT2;
+typedef CGAL::Periodic_3_Delaunay_triangulation_traits_3<K2>                  PTT2;
 typedef CGAL::Periodic_3_triangulation_ds_vertex_base_3<>            DSVB2;
 typedef CGAL::Periodic_3_triangulation_ds_cell_base_3<>              DSCB2;
 typedef CGAL::Triangulation_vertex_base_3<PTT2,DSVB2>                VBB2;
@@ -55,7 +57,7 @@ template class CGAL::Periodic_3_triangulation_hierarchy_3<PDT2>;
 #include <CGAL/MP_Float.h>
 #include <CGAL/Simple_homogeneous.h>
 typedef CGAL::Simple_homogeneous<CGAL::MP_Float>                     K3;
-typedef CGAL::Periodic_3_triangulation_traits_3<K3>                  PTT3;
+typedef CGAL::Periodic_3_Delaunay_triangulation_traits_3<K3>                  PTT3;
 typedef CGAL::Periodic_3_triangulation_ds_vertex_base_3<>            DSVB3;
 typedef CGAL::Periodic_3_triangulation_ds_cell_base_3<>              DSCB3;
 typedef CGAL::Triangulation_vertex_base_3<PTT3,DSVB3>                VBB3;
@@ -69,6 +71,8 @@ template class CGAL::Periodic_3_triangulation_hierarchy_3<PDT3>;
 #include <CGAL/_test_cls_periodic_3_delaunay_3.h>
 int main()
 {
+  CGAL::Timer timer;
+  timer.start();
   typedef CGAL::Periodic_3_triangulation_hierarchy_3< PDT1 > P3T3_1;
   _test_cls_periodic_3_delaunay_3( P3T3_1() );
 
@@ -80,5 +84,6 @@ int main()
   // this takes too much time for the test suite.
   //_test_cls_periodic_3_delaunay_3( P3T3_3(), true );
 
+  std::cerr << timer.time() << " sec." << std::endl;
   return 0;
 }

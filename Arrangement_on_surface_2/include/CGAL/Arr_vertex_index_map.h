@@ -26,12 +26,8 @@
  * Definition of the Arr_vertex_index_map<Arrangement> class.
  */
 #include <CGAL/Unique_hash_map.h>
-#include <boost/version.hpp>
-#if BOOST_VERSION >= 104000
-#include <boost/property_map/property_map.hpp>
-#else
-#include <boost/property_map.hpp>
-#endif
+#include <CGAL/property_map.h>
+
 #include <boost/graph/properties.hpp>
 
 namespace CGAL {

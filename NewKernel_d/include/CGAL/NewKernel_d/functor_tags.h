@@ -98,7 +98,11 @@ namespace CGAL {
 	struct Provides_type_i <Kernel, Tg, true>
 	  : Has_type_different_from<typename Kernel::template Type<Tg>, Null_type> {};
 
+	//// This version does not like Functor<T,bool=false>
+	//namespace internal { BOOST_MPL_HAS_XXX_TEMPLATE_NAMED_DEF(has_Functor,Functor,false) }
+	// This version lets us use non-type template parameters, but fails with older EDG-based compilers (Intel 14).
 	namespace internal { BOOST_MPL_HAS_XXX_TRAIT_NAMED_DEF(has_Functor,template Functor<Null_tag>,false) }
+
 	template<class Kernel, class Tg, class O=void,
 	  bool = internal::has_Functor<Kernel>::value /* false */>
 	struct Provides_functor_i : boost::false_type {};
@@ -110,14 +114,7 @@ namespace CGAL {
 	template <class K, class T, class D=void,
 		  //bool=Provides_functor<K,T>::value,
 		  //bool=Provides_functor_i<K,T>::value,
-		  bool =
-#ifdef __INTEL_COMPILER
-// FIXME: this is obviously wrong, but Intel's compiler evaluates it to false
-// and Epick_d doesn't seem to use the other case currently.
-		    true
-#else
-		    internal::has_Functor<K>::value
-#endif
+		  bool = internal::has_Functor<K>::value
 		  >
 	struct Inherit_functor : K::template Functor<T> {};
 	template <class K, class T, class D>
@@ -213,6 +210,7 @@ namespace CGAL {
 	CGAL_DECL_COMPUTE(Squared_distance_to_origin);
 	CGAL_DECL_COMPUTE(Squared_length);
 	CGAL_DECL_COMPUTE(Squared_radius);
+	CGAL_DECL_COMPUTE(Squared_circumradius);
 	CGAL_DECL_COMPUTE(Scalar_product);
 	CGAL_DECL_COMPUTE(Hyperplane_translation);
 	CGAL_DECL_COMPUTE(Value_at);
@@ -265,6 +263,9 @@ namespace CGAL {
 	CGAL_DECL_CONSTRUCT(Translated_point,Point);
 	CGAL_DECL_CONSTRUCT(Point_to_vector,Vector);
 	CGAL_DECL_CONSTRUCT(Vector_to_point,Point);
+	CGAL_DECL_CONSTRUCT(Construct_min_vertex,Point);
+	CGAL_DECL_CONSTRUCT(Construct_max_vertex,Point);
+	CGAL_DECL_CONSTRUCT(Construct_circumcenter,Point);
 #undef CGAL_DECL_CONSTRUCT
 #if 0
 #define CGAL_DECL_ITER_CONSTRUCT(X,Y) struct X##_tag {}; \
@@ -294,6 +295,7 @@ namespace CGAL {
 	CGAL_DECL_PREDICATE(Orientation_of_vectors);
 	CGAL_DECL_PREDICATE(Side_of_oriented_sphere);
 	CGAL_DECL_PREDICATE(Side_of_bounded_sphere);
+	CGAL_DECL_PREDICATE(Side_of_bounded_circumsphere);
 	CGAL_DECL_PREDICATE(Contained_in_affine_hull);
 	CGAL_DECL_PREDICATE(In_flat_orientation);
 	CGAL_DECL_PREDICATE(In_flat_side_of_oriented_sphere);

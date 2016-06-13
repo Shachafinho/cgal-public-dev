@@ -5,8 +5,6 @@
 # The variables used here are defined in the CGALConfig.cmake generated when CGAL was installed.
 #
 #
-set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS true)
-
 include(${CGAL_MODULES_DIR}/CGAL_Macros.cmake)
 
 cgal_setup_module_path()
@@ -42,10 +40,6 @@ if(NOT USE_CGAL_FILE_INCLUDED)
 
   include_directories( "${CMAKE_CURRENT_BINARY_DIR}" )
 
-  # need to get variable from cache while compiling CGAL, while in a demo it is set in CGALConfig.cmake
-  if ( NOT CGAL_LIBRARY )
-    cache_get(CGAL_LIBRARY)
-  endif()
   if(TARGET CGAL)
     add_to_list( CGAL_LIBRARIES CGAL )
   else()

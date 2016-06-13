@@ -12,9 +12,6 @@
 // This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
 // WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 //
-// $URL: $
-// $Id: $
-//
 // Author(s)     : Alex Tsui <alextsui05@gmail.com>
 
 #ifndef CGAL_ARRANGEMENTS_DEMO_UTILS_H
@@ -338,16 +335,16 @@ public:
   typedef typename Kernel::Segment_2 Segment_2;
   typedef typename Traits::Curve_2 Curve_2;
   typedef typename Traits::X_monotone_curve_2 X_monotone_curve_2;
-  typedef typename Curve_2::Segment_const_iterator Seg_const_it;
+  typedef typename Curve_2::Subcurve_const_iterator Seg_const_it;
 
   double operator() ( const Point_2& p, const X_monotone_curve_2& c ) const
   {
-    Seg_const_it seg_it_s = c.begin_segments();
+    Seg_const_it seg_it_s = c.subcurves_begin();
 
     bool first = true;
     FT min_dist = 0;
 
-    while (seg_it_s != c.end_segments())
+    while (seg_it_s != c.subcurves_end())
       {
         Segment_2 seg = *seg_it_s;
         FT dist = this->squared_distance( p, seg );

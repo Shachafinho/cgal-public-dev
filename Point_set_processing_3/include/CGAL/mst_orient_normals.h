@@ -46,8 +46,8 @@ namespace CGAL {
 // ----------------------------------------------------------------------------
 // Private section
 // ----------------------------------------------------------------------------
-namespace internal {
 /// \cond SKIP_IN_MANUAL
+namespace internal {
 
 /// Generalization of std::distance() to compute the distance between 2 integers
 inline std::size_t
@@ -153,7 +153,7 @@ struct Propagate_normal_orientation
         typedef typename MST_graph::vertex_descriptor vertex_descriptor;
 
         // Gets source normal
-        vertex_descriptor source_vertex = boost::source(edge, mst_graph);
+        vertex_descriptor source_vertex = source(edge, mst_graph);
 #ifdef CGAL_USE_PROPERTY_MAPS_API_V1
         const Vector source_normal = get(mst_graph.m_normal_pmap, mst_graph[source_vertex].input_point);
 #else
@@ -161,7 +161,7 @@ struct Propagate_normal_orientation
 #endif
         const bool source_normal_is_oriented = mst_graph[source_vertex].is_oriented;
         // Gets target normal
-        vertex_descriptor target_vertex = boost::target(edge, mst_graph);
+        vertex_descriptor target_vertex = target(edge, mst_graph);
 #ifdef CGAL_USE_PROPERTY_MAPS_API_V1
         const Vector& target_normal = get( mst_graph.m_normal_pmap, mst_graph[target_vertex].input_point);
 #else
@@ -394,9 +394,9 @@ create_riemannian_graph(
                 // Add edge
                 typename boost::graph_traits<Riemannian_graph>::edge_descriptor e;
                 bool inserted;
-                boost::tie(e, inserted) = boost::add_edge(boost::vertex(it_index, riemannian_graph),
-                                                          boost::vertex(neighbor_index, riemannian_graph),
-                                                          riemannian_graph);
+                boost::tie(e, inserted) = add_edge(vertex(it_index, riemannian_graph),
+                                                   vertex(neighbor_index, riemannian_graph),
+                                                   riemannian_graph);
                 CGAL_point_set_processing_assertion(inserted);
 
                 //                               ->        ->
@@ -472,7 +472,7 @@ create_mst_graph(
     CGAL_point_set_processing_precondition(first != beyond);
 
     // Number of input points
-    const std::size_t num_input_points = boost::num_vertices(riemannian_graph);
+    const std::size_t num_input_points = num_vertices(riemannian_graph);
 
     std::size_t memory = CGAL::Memory_sizer().virtual_size(); CGAL_TRACE("  %ld Mb allocated\n", memory>>20);
     CGAL_TRACE("  Calls boost::prim_minimum_spanning_tree()\n");
@@ -484,7 +484,7 @@ create_mst_graph(
     PredecessorMap predecessor(num_input_points);
     boost::prim_minimum_spanning_tree(riemannian_graph, &predecessor[0],
                                       weight_map( riemannian_graph_weight_map )
-                                     .root_vertex( boost::vertex(source_point_index, riemannian_graph) ));
+                                     .root_vertex( vertex(source_point_index, riemannian_graph) ));
 
     memory = CGAL::Memory_sizer().virtual_size(); CGAL_TRACE("  %ld Mb allocated\n", memory>>20);
     CGAL_TRACE("  Creates MST Graph\n");
@@ -498,6 +498,9 @@ create_mst_graph(
     // Add vertices. source_point is the unique point marked "oriented".
     for (ForwardIterator it = first; it != beyond; it++)
     {
+        // With C++11, the following line triggers a bug in Boost versions
+        // 1.56 and 1.57:
+        //   https://svn.boost.org/trac/boost/ticket/10382
         typename MST_graph::vertex_descriptor v = add_vertex(mst_graph);
         CGAL_point_set_processing_assertion(v == get(index_pmap,it));
         mst_graph[v].input_point = it;
@@ -511,19 +514,17 @@ create_mst_graph(
             // check that bi-directed graph is useless
             CGAL_point_set_processing_assertion(predecessor[predecessor[i]] != i);
 
-            boost::add_edge(boost::vertex(predecessor[i], mst_graph),
-                            boost::vertex(i,     mst_graph),
-                            mst_graph);
+            add_edge(vertex(predecessor[i], mst_graph),
+                     vertex(i,     mst_graph),
+                     mst_graph);
         }
     }
 
     return mst_graph;
 }
 
-/// \endcond
-
 } /* namespace internal */
-
+/// \endcond
 
 // ----------------------------------------------------------------------------
 // Public section
@@ -543,11 +544,11 @@ create_mst_graph(
 /// \pre `k >= 2`
 ///
 /// @tparam ForwardIterator iterator over input points.
-/// @tparam PointPMap is a model of `ReadablePropertyMap` with a value_type = Point_3<Kernel>.
-///        It can be omitted if ForwardIterator value_type is convertible to Point_3<Kernel>.
-/// @tparam NormalPMap is a model of `ReadWritePropertyMap` with a value_type = Vector_3<Kernel>.
+/// @tparam PointPMap is a model of `ReadablePropertyMap` with value type  `Point_3<Kernel>`.
+///        It can be omitted if the value type of `ForwardIterator` is convertible to `Point_3<Kernel>`.
+/// @tparam NormalPMap is a model of `ReadWritePropertyMap` with value type `Vector_3<Kernel>` .
 /// @tparam Kernel Geometric traits class.
-///        It can be omitted and deduced automatically from PointPMap value_type.
+///        It can be omitted and deduced automatically from the value type of `PointPMap`.
 ///
 /// @return iterator over the first point with an unoriented normal.
 
@@ -630,7 +631,7 @@ mst_orient_normals(
     Propagate_normal_orientation<ForwardIterator, NormalPMap, Kernel> orienter;
     std::size_t source_point_index = get(index_pmap, source_point);
     boost::breadth_first_search(mst_graph,
-                                boost::vertex(source_point_index, mst_graph), // source
+                                vertex(source_point_index, mst_graph), // source
                                 visitor(boost::make_bfs_visitor(orienter)));
 
     // Copy points with robust normal orientation to oriented_points[], the others to unoriented_points[].
@@ -638,7 +639,7 @@ mst_orient_normals(
     for (ForwardIterator it = first; it != beyond; it++)
     {
         std::size_t it_index = get(index_pmap,it);
-        typename MST_graph::vertex_descriptor v = boost::vertex(it_index, mst_graph);
+        typename MST_graph::vertex_descriptor v = vertex(it_index, mst_graph);
         if (mst_graph[v].is_oriented)
           oriented_points.push_back(*it);
         else

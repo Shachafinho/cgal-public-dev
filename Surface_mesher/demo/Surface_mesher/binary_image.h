@@ -44,9 +44,16 @@ public:
   typedef FT_ FT;
 
 public:
-  CBinary_image_3() : Image_3(), interpolate_(true)
+  CBinary_image_3()
+    : Image_3(), interpolate_(true)
   {
   }
+
+  CBinary_image_3(const Image_3& bi)
+    : Image_3(bi), interpolate_(true)
+  {
+  }
+
 
   CBinary_image_3(const CBinary_image_3& bi)
     : Image_3(bi), interpolate_(bi.interpolate_),labellized_(bi.labellized_)
@@ -56,9 +63,6 @@ public:
     max_value = bi.max_value;
   }
 
-  ~CBinary_image_3()
-  {
-  }
 
   void finish_open() {
     CGAL_IMAGE_IO_CASE(image_ptr.get(),
@@ -99,9 +103,9 @@ public:
     return (std::max)((std::max)(xmax(),ymax()),zmax());
   }
 
-  Point point(const unsigned int i,
-              const unsigned int j,
-              const unsigned int k) const
+  Point point(const std::size_t i,
+              const std::size_t j,
+              const std::size_t k) const
   {
     return Point(i * (image_ptr->vx),
                  j * (image_ptr->vy),
@@ -160,9 +164,9 @@ public:
       }
     }
     else {
-      const int i = static_cast<int>(x/image()->vx + 0.5f);
-      const int j = static_cast<int>(y/image()->vy + 0.5f);
-      const int k = static_cast<int>(z/image()->vz + 0.5f);
+      const std::ptrdiff_t i = static_cast<std::ptrdiff_t>(x/image()->vx + 0.5f);
+      const std::ptrdiff_t j = static_cast<std::ptrdiff_t>(y/image()->vy + 0.5f);
+      const std::ptrdiff_t k = static_cast<std::ptrdiff_t>(z/image()->vz + 0.5f);
       if( i < 0 ||
 	  j < 0 ||
 	  k < 0 )
@@ -171,9 +175,9 @@ public:
       }
       else
       {    
-	const unsigned int ui = static_cast<unsigned int>(i);
-	const unsigned int uj = static_cast<unsigned int>(j);
-	const unsigned int uk = static_cast<unsigned int>(k);
+	const std::size_t ui = static_cast<std::size_t>(i);
+	const std::size_t uj = static_cast<std::size_t>(j);
+	const std::size_t uk = static_cast<std::size_t>(k);
 	if( ui >= image()->xdim ||
 	    uj >= image()->ydim ||
 	    uk >= image()->zdim )

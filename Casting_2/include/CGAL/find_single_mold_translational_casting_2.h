@@ -381,6 +381,7 @@ public:
         ++it;
       }
     }
+    return oi;
   }
 
   /*! \fn bool all_is_covered_twice()

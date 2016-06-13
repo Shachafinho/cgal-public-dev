@@ -55,11 +55,9 @@ public:
   int selectionAindex() const;
   int selectionBindex() const;
 
-  // initializeGL() is called by Viewer::initializeGL()
-  void initializeGL();
   // draw() is called by Viewer::draw()
-  void draw();
-  void drawWithNames();
+  void draw(Viewer *viewer);
+  void drawWithNames(Viewer *viewer);
 
   // Get scene bounding box
   Bbox bbox() const;
@@ -83,7 +81,7 @@ public:
   // auxiliary public function for QMainWindow
   QItemSelection createSelection(int i);
 
-public slots:
+public Q_SLOTS:
   // Notify the scene that an item was modified
   void itemChanged(Item_id i); 
   void itemChanged(Scene_item*);
@@ -91,7 +89,7 @@ public slots:
   virtual void setSelectedItem(Item_id i)
   {
     selected_item = i;
-    emit selectionChanged();
+    Q_EMIT selectionChanged();
   };
 
   // Accessors (setters)
@@ -99,14 +97,14 @@ public slots:
   void setItemA(int i);
   void setItemB(int i);
 
-signals:
+Q_SIGNALS:
   void updated_bbox();
   void updated();
   void itemAboutToBeDestroyed(Scene_item*);
   void selectionChanged();
 
 private:
-  void draw_aux(bool with_names);
+  void draw_aux(bool with_names, Viewer *viewer);
   typedef QList<Scene_item*> Entries;
   Entries entries;
   int selected_item;

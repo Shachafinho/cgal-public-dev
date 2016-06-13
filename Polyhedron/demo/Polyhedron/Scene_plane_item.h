@@ -1,13 +1,15 @@
 #ifndef SCENE_PLANE_ITEM_H
 #define SCENE_PLANE_ITEM_H
 
-#include "Scene_item.h"
-#include "Scene_interface.h"
+
+#include  <CGAL/Three/Scene_item.h>
+#include <CGAL/Three/Scene_interface.h>
 
 #include "Scene_basic_objects_config.h"
 
 #include <QGLViewer/manipulatedFrame.h>
 #include <QGLViewer/qglviewer.h>
+#include <CGAL/Three/Viewer_interface.h>
 
 #include <cmath>
 
@@ -16,29 +18,32 @@ typedef CGAL::Exact_predicates_inexact_constructions_kernel Kernel_epic;
 typedef Kernel_epic::Plane_3 Plane_3;
 
 class SCENE_BASIC_OBJECTS_EXPORT Scene_plane_item 
-  : public Scene_item
+  : public CGAL::Three::Scene_item
 {
   Q_OBJECT
 public:
   typedef qglviewer::ManipulatedFrame ManipulatedFrame;
 
-  Scene_plane_item(const Scene_interface* scene_interface) 
-    : scene(scene_interface),
+  Scene_plane_item(const CGAL::Three::Scene_interface* scene_interface)
+      :CGAL::Three::Scene_item(NbOfVbos,NbOfVaos),
+      scene(scene_interface),
       manipulable(false),
       can_clone(true),
       frame(new ManipulatedFrame())
   {
     setNormal(0., 0., 1.);
+    //Generates an integer which will be used as ID for each buffer
+    invalidateOpenGLBuffers();
   }
 
   ~Scene_plane_item() {
+    frame = 0;
     delete frame;
   }
 
   bool isFinite() const { return false; }
   bool isEmpty() const { return false; }
-  Bbox bbox() const { return Bbox(); }
-
+  void compute_bbox() const { _bbox = Bbox(); }
   bool manipulatable() const {
     return manipulable;
   }
@@ -87,39 +92,13 @@ public:
 
   // Indicate if rendering mode is supported
   bool supportsRenderingMode(RenderingMode m) const {
-    return (m == Wireframe || m == Flat); 
+    return (m == Wireframe || m == Flat || m == FlatPlusEdges);
   }
-
-  // Flat OpenGL drawing
-  void draw() const {
-    const double diag = scene_diag();
-    ::glPushMatrix();
-    ::glMultMatrixd(frame->matrix());
-    GLboolean lighting;
-    ::glGetBooleanv(GL_LIGHTING, &lighting);
-    ::glDisable(GL_LIGHTING);
-    ::glBegin(GL_POLYGON);
-    ::glVertex3d(-diag, -diag, 0.);
-    ::glVertex3d(-diag,  diag, 0.);
-    ::glVertex3d( diag,  diag, 0.);
-    ::glVertex3d( diag, -diag, 0.);
-    ::glEnd();
-    if(lighting)
-      ::glEnable(GL_LIGHTING);
-    ::glPopMatrix();
-  };
-
-  // Wireframe OpenGL drawing
-  void draw_edges() const {
-    ::glPushMatrix();
-    ::glMultMatrixd(frame->matrix());
-    QGLViewer::drawGrid((float)scene_diag());
-    ::glPopMatrix();
-  }
-
+  virtual void draw(CGAL::Three::Viewer_interface*) const;
+ virtual void drawEdges(CGAL::Three::Viewer_interface* viewer)const;
   Plane_3 plane() const {
     const qglviewer::Vec& pos = frame->position();
-    const qglviewer::Vec& n = 
+    const qglviewer::Vec& n =
       frame->inverseTransformOf(qglviewer::Vec(0.f, 0.f, 1.f));
     return Plane_3(n[0], n[1],  n[2], - n * pos);
   }
@@ -127,16 +106,23 @@ public:
 private:
   double scene_diag() const {
     const Bbox& bbox = scene->bbox();
-    const double& xdelta = bbox.xmax-bbox.xmin;
-    const double& ydelta = bbox.ymax-bbox.ymin;
-    const double& zdelta = bbox.zmax-bbox.zmin;
+    const double& xdelta = bbox.xmax()-bbox.xmin();
+    const double& ydelta = bbox.ymax()-bbox.ymin();
+    const double& zdelta = bbox.zmax()-bbox.zmin();
     const double diag = std::sqrt(xdelta*xdelta + 
                             ydelta*ydelta +
                             zdelta*zdelta);
     return diag * 0.7;
   }
 
-public slots:
+public Q_SLOTS:
+  virtual void invalidateOpenGLBuffers()
+  {
+      compute_normals_and_vertices();
+      are_buffers_filled = false;
+      compute_bbox();
+  }
+
   void setPosition(float x, float y, float z) {
     frame->setPosition(x, y, z);
   }
@@ -146,13 +132,33 @@ public slots:
   }
   
   void setNormal(float x, float y, float z) {
-    frame->setOrientation(x, y, z, 0.f);
+    QVector3D normal(x,y,z);
+    if(normal == QVector3D(0,0,0))
+      return;
+    QVector3D origin(0,0,1);
+    qglviewer::Quaternion q;
+    if(origin == normal)
+    {
+      return;
+    }
+     if(origin == -normal)
+    {
+      q.setAxisAngle(qglviewer::Vec(0,1,0),M_PI);
+      frame->setOrientation(q);
+      return;
+    }
+
+    QVector3D cp = QVector3D::crossProduct(origin, normal);
+    cp.normalize();
+    q.setAxisAngle(qglviewer::Vec(cp.x(),cp.y(), cp.z()),acos(QVector3D::dotProduct(origin, normal)/(normal.length()*origin.length())));
+
+    frame->setOrientation(q.normalized());
   }
 
   void setNormal(double x, double y, double z) {
-    frame->setOrientation((float)x, (float)y, (float)z, 0.f);
+    setNormal((float)x, (float)y, (float)z);
   }
-
+  void flipPlane();
   void setClonable(bool b = true) {
     can_clone = b;
   }
@@ -160,11 +166,32 @@ public slots:
   void setManipulatable(bool b = true) {
     manipulable = b;
   }
-private:
-  const Scene_interface* scene;
+protected:
+  const CGAL::Three::Scene_interface* scene;
   bool manipulable;
   bool can_clone;
   qglviewer::ManipulatedFrame* frame;
+
+  enum VAOs {
+      Facets = 0,
+      Edges,
+      NbOfVaos = Edges +1
+  };
+  enum VBOs {
+      Facets_vertices = 0,
+      Edges_vertices,
+      NbOfVbos = Edges_vertices +1
+  };
+
+  mutable std::vector<float> positions_lines;
+  mutable std::vector<float> positions_quad;
+  mutable GLint sampler_location;
+  mutable bool smooth_shading;
+  mutable QOpenGLShaderProgram *program;
+
+  using CGAL::Three::Scene_item::initializeBuffers;
+  void initializeBuffers(CGAL::Three::Viewer_interface*)const;
+  void compute_normals_and_vertices(void);
 };
 
 #endif // SCENE_PLANE_ITEM_H

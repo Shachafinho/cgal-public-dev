@@ -38,11 +38,11 @@
 # Declare files that will always have LF line endings on checkout.
 Documentation/Doxyfile text eol=lf
 Documentation/pkglist_filter text eol=lf
+Installation/update_CHANGES text eol=lf
 Scripts/developer_scripts/autotest_cgal text eol=lf
 Scripts/developer_scripts/autotest_cgal_with_cmake text eol=lf
 Scripts/developer_scripts/cgal_build text eol=lf
 Scripts/developer_scripts/cgal_depend text eol=lf
-Scripts/developer_scripts/cgal_generate_cmake_script text eol=lf
 Scripts/developer_scripts/cgal_git_update_hooks_for_client text eol=lf
 Scripts/developer_scripts/cgal_test_with_cmake text eol=lf
 Scripts/developer_scripts/cgal2gml text eol=lf
@@ -74,7 +74,6 @@ Scripts/scripts/cgal_create_assertions.sh text eol=lf
 *.bat text eol=crlf
 *.nsh text eol=crlf
 *.vcproj  text eol=crlf
-/Maintenance/infrastructure/picasso.geometryfactory.com/reference_platforms/*/CMakeCache.txt eol=crlf
 
 # Denote all files that are truly binary and should not be modified.
 *.png binary

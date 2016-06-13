@@ -22,6 +22,7 @@ iterators and circulators for these halfedge cycles.
 A model of `HalfedgeGraph` must have the interior property `vertex_point` attached to its vertices.
 
 \cgalHasModel `CGAL::Polyhedron_3`
+\cgalHasModel `CGAL::Surface_mesh`
 
 \cgalHeading{Notations}
 
@@ -53,5 +54,6 @@ Expression                              | Returns                               
 `target(h,g)`                           | `vertex_descriptor`                                                          | The target vertex of `h`.
 `next(h, g)`                            | `halfedge_descriptor`                                                        | The next halfedge around its face.
 `prev(h, g)`                            | `halfedge_descriptor`                                                        | The previous halfedge around its face.
+`boost::graph_traits<G>::%null_halfedge()` | `halfedge_descriptor`                                                     | Returns a special halfedge that is not equal to any other halfedge.
 */
 class HalfedgeGraph {};

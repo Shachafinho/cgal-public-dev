@@ -20,7 +20,8 @@
 #ifndef CGAL_MEMORY_SIZER_H
 #define CGAL_MEMORY_SIZER_H
 
-#include <CGAL/basic.h>
+#include <CGAL/config.h>
+#include <CGAL/assertions.h>
 
 // This has only been implemented for MacOSX/Darwin, Linux and VC++ for now.
 #if !defined _MSC_VER && !defined __linux__ && !defined __APPLE__
@@ -121,7 +122,7 @@ private:
     size_type vsize = 0, rss = 0;
 
     std::ifstream f("/proc/self/stat");
-    CGAL_assertion(f);
+    CGAL_assertion(!f.bad());
 
     f >> pid >> name >> state >> ppid >> pgrp >> session >> tty >> tpgid >> flags;
     f >> minflt >> cminflt >> majflt >> cmajflt >> utime >> stime >> cutime;

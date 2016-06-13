@@ -4,17 +4,13 @@
 
 project( Arithmetic_kernel_test )
 
-cmake_minimum_required(VERSION 2.6.2)
-if("${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION}" VERSION_GREATER 2.8.3)
-  cmake_policy(VERSION 2.8.4)
-else()
-  cmake_policy(VERSION 2.6)
-endif()
+cmake_minimum_required(VERSION 2.8.11)
 
 
-find_package(CGAL QUIET COMPONENTS Core GMP MPFR MPFI)
 
-if ( CGAL_FOUND )
+find_package(CGAL QUIET COMPONENTS Core GMP MPFR)
+
+if ( CGAL_FOUND AND GMP_FOUND )
 
   include( ${CGAL_USE_FILE} )
   include( CGAL_VersionUtils )
@@ -27,6 +23,8 @@ if ( CGAL_FOUND )
   include_directories(include)
 
   include( CGAL_CreateSingleSourceCGALProgram )
+
+  find_package( MPFI )
 
   if( MPFI_FOUND )
     # for the testsuite, the version of MPFI shipped with RS is used; this

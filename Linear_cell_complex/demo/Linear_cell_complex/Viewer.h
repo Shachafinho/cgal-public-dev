@@ -22,34 +22,29 @@
 #define VIEWER_H
 
 #include "typedefs.h"
+
+#include <vector>
 #include <QGLViewer/qglviewer.h>
 #include <QKeyEvent>
+#include <QOpenGLFunctions_2_1>
+#include <QOpenGLVertexArrayObject>
+#include <QGLBuffer>
+#include <QOpenGLShaderProgram>
 
-class Viewer : public QGLViewer 
+class Viewer : public QGLViewer, public QOpenGLFunctions_2_1
 {
   Q_OBJECT
-
-  CGAL::Timer timer;
-  Scene* scene;
-  bool wireframe;
-  bool flatShading;
-  bool edges;
-  bool vertices;
 
   typedef LCC::Dart_handle Dart_handle;
   typedef LCC::Dart_const_handle Dart_const_handle;
 
-
 public:
-  Viewer(QWidget* parent)
-    : QGLViewer(parent), wireframe(false), flatShading(true),
-      edges(true), vertices(true)
-  {}
+  Viewer(QWidget* parent);
+
+  ~Viewer();
 
   void setScene(Scene* scene_)
-  {
-    scene = scene_;
-  }
+  { scene = scene_; }
 
 public:
   void draw();
@@ -57,18 +52,53 @@ public:
   virtual void init();
 
   void keyPressEvent(QKeyEvent *e);
-  
+
   virtual QString helpString() const;
 
-public slots :
-  
+public Q_SLOTS:
+
   void sceneChanged();
 
-protected:
-  void drawFacet(Dart_const_handle ADart);
-  void drawEdges(Dart_const_handle ADart);
-  void draw_one_vol(Dart_const_handle ADart, bool filled);
-  CGAL::Bbox_3 bbox();
+private:
+  void initialize_buffers();
+  void attrib_buffers(QGLViewer*);
+  void compile_shaders();
+
+  void compute_elements();
+  void compute_face(Dart_handle dh, LCC::size_type markface);
+  void compute_edge(Dart_handle dh, LCC::size_type markedge);
+  void compute_vertex(Dart_handle dh, LCC::size_type markvertex, bool& empty);
+
+private:
+  Scene* scene;
+  bool wireframe;
+  bool flatShading;
+  bool edges;
+  bool vertices;
+  CGAL::Bbox_3 bb;
+  bool m_previous_scene_empty;
+  bool are_buffers_initialized;
+
+  //Shaders elements
+  int vertexLocation[3];
+  int normalsLocation;
+  int mvpLocation[2];
+  int mvLocation;
+  int colorLocation;
+  int colorsLocation;
+  int lightLocation[5];
+
+  std::vector<float> pos_points;
+  std::vector<float> pos_lines;
+  std::vector<float> pos_facets;
+  std::vector<float> smooth_normals;
+  std::vector<float> flat_normals;
+  std::vector<float> colors;
+
+  QGLBuffer buffers[10];
+  QOpenGLVertexArrayObject vao[10];
+  QOpenGLShaderProgram rendering_program;
+  QOpenGLShaderProgram rendering_program_p_l;
 };
 
 #endif

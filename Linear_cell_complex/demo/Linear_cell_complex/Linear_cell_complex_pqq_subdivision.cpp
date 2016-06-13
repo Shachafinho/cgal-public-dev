@@ -30,7 +30,7 @@ public:
    * @param amark is a mark designing old darts (i.e. darts not created during
    *        the subdivision step)
    */
-  Smooth_edge_pqq (LCC & alcc, unsigned int o):mlcc (alcc), old(o)
+  Smooth_edge_pqq (LCC & alcc, LCC::size_type o):mlcc (alcc), old(o)
   {
   }
 
@@ -99,7 +99,7 @@ public:
   }
 private:
   LCC & mlcc;
-  unsigned int old;
+  LCC::size_type old;
 };
 
 // Smooth an old vertex depending on the vertices of its incident facet and edge.
@@ -111,7 +111,7 @@ public:
    * @param amark is a mark designing old darts (i.e. darts not created during
    *        the triangulation step)
    */
-  Smooth_vertex_pqq (LCC & alcc, unsigned int o):mlcc (alcc), old(o)
+  Smooth_vertex_pqq (LCC & alcc, LCC::size_type o):mlcc (alcc), old(o)
   {
   }
 
@@ -214,7 +214,7 @@ public:
   }
 private:
   LCC & mlcc;
-  unsigned int old;
+  LCC::size_type old;
 };
 
 
@@ -225,8 +225,8 @@ subdivide_lcc_pqq (LCC & m)
   if (m.number_of_darts () == 0)
     return;
 
-  unsigned int old = m.get_new_mark ();
-  unsigned int treated = m.get_new_mark ();
+  LCC::size_type old = m.get_new_mark ();
+  LCC::size_type treated = m.get_new_mark ();
   m.negate_mark (old);  // All the old darts are marked in O(1).
 
   // 1) We subdivide each edge.
@@ -278,8 +278,8 @@ subdivide_lcc_pqq (LCC & m)
       for (std::vector <Dart_handle>::iterator dit = remove.begin ();
           dit != remove.end (); ++dit)
       {
-        CGAL_assertion( (CGAL::is_removable<LCC, 1>(m,*dit)) );
-        CGAL::remove_cell<LCC, 1>(m, *dit);
+        CGAL_assertion( (m.is_removable<1>(*dit)) );
+        m.remove_cell<1>(*dit);
       }
       remove.resize(0); 
       // CGAL_assertion( m.is_valid() );

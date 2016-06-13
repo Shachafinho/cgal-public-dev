@@ -4,12 +4,8 @@
 
 project( Mesh_3_test )
 
-cmake_minimum_required(VERSION 2.6.2)
-if("${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION}" VERSION_GREATER 2.8.3)
-  cmake_policy(VERSION 2.8.4)
-else()
-  cmake_policy(VERSION 2.6)
-endif()
+cmake_minimum_required(VERSION 2.8.11)
+
 
 find_package(CGAL QUIET COMPONENTS ImageIO)
 
@@ -43,6 +39,7 @@ if ( CGAL_FOUND )
   create_single_source_cgal_program( "test_mesh_criteria_creation.cpp" )
   if(CGAL_ImageIO_USE_ZLIB)
     create_single_source_cgal_program( "test_meshing_3D_image.cpp" )
+    create_single_source_cgal_program( "test_meshing_3D_gray_image.cpp" )
   else()
     message(STATUS "test_meshing_3D_image requires the ZLIB library, and will not be compiled.")
   endif()
@@ -51,8 +48,10 @@ if ( CGAL_FOUND )
   create_single_source_cgal_program( "test_meshing_polylines_only.cpp" )
   create_single_source_cgal_program( "test_meshing_polyhedron_with_features.cpp" )
   create_single_source_cgal_program( "test_meshing_unit_tetrahedron.cpp" )
+  create_single_source_cgal_program( "test_meshing_with_default_edge_size.cpp" )
   create_single_source_cgal_program( "test_robust_weighted_circumcenter.cpp" )
   create_single_source_cgal_program( "test_meshing_determinism.cpp" )
+  create_single_source_cgal_program( "test_c3t3_extract_subdomains_boundaries.cpp" )
 
 else()
   

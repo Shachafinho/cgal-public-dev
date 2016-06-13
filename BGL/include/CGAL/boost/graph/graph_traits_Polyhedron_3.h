@@ -23,6 +23,8 @@
 #include <CGAL/boost/graph/graph_traits_HalfedgeDS.h>
 
 #include <CGAL/Polyhedron_3.h>
+#include <CGAL/Iterator_range.h>
+#include <CGAL/HalfedgeDS_decorator.h>
 
 #define CGAL_HDS_PARAM_ template < class Traits, class Items, class Alloc> class HDS
 
@@ -138,49 +140,40 @@ edge(typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> const>::vertex
 }
 
 template<class Gt, class I, CGAL_HDS_PARAM_, class A>
-inline std::pair<typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> const>::vertex_iterator
-                ,typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> const>::vertex_iterator
-                >
+inline Iterator_range<typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> const>::vertex_iterator>
 vertices( const CGAL::Polyhedron_3<Gt,I,HDS,A>& p)
 {
   typedef typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> const>::vertex_iterator Iter;
   CGAL::Polyhedron_3<Gt,I,HDS,A>& ncp = const_cast<CGAL::Polyhedron_3<Gt,I,HDS,A>&>(p);
-  return std::make_pair( Iter(ncp.vertices_begin()), Iter(ncp.vertices_end()) );
+  return make_range( Iter(ncp.vertices_begin()), Iter(ncp.vertices_end()) );
 }
 
 template<class Gt, class I, CGAL_HDS_PARAM_, class A>
-inline std::pair<typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> const>::edge_iterator
-                ,typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> const>::edge_iterator
-                >
+inline Iterator_range<typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> const>::edge_iterator>
 edges( const CGAL::Polyhedron_3<Gt,I,HDS,A>& p)
 {
   typedef typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> const>::edge_iterator_i Iter_i;
   typedef typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> const>::edge_iterator Iter;
   CGAL::Polyhedron_3<Gt,I,HDS,A>& ncp = const_cast<CGAL::Polyhedron_3<Gt,I,HDS,A>&>(p);
-  return std::make_pair( Iter(Iter_i(ncp.halfedges_begin())),
-                         Iter(Iter_i(ncp.halfedges_end()) ));
+  return make_range( Iter(Iter_i(ncp.halfedges_begin())), Iter(Iter_i(ncp.halfedges_end()) ));
 }
 
 template<class Gt, class I, CGAL_HDS_PARAM_, class A>
-inline std::pair<typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> const>::in_edge_iterator
-                ,typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> const>::in_edge_iterator
-                >
+inline Iterator_range<typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> const>::in_edge_iterator>
 in_edges( typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> const>::vertex_descriptor u
           , const CGAL::Polyhedron_3<Gt,I,HDS,A>& p)
 {
   typedef typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> const>::in_edge_iterator Iter;
-  return std::make_pair(Iter(halfedge(u,p),p), Iter(halfedge(u,p),p,1));
+  return make_range(Iter(halfedge(u,p),p), Iter(halfedge(u,p),p,1));
 }
 
 template<class Gt, class I, CGAL_HDS_PARAM_, class A>
-inline std::pair<typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> const>::out_edge_iterator
-                ,typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> const>::out_edge_iterator
-                >
+inline Iterator_range<typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> const>::out_edge_iterator>
 out_edges( typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> const>::vertex_descriptor u
            , const CGAL::Polyhedron_3<Gt,I,HDS,A>& p)
 {
   typedef typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> const>::out_edge_iterator Iter;
-  return std::make_pair(Iter(halfedge(u,p),p), Iter(halfedge(u,p),p,1));
+  return make_range(Iter(halfedge(u,p),p), Iter(halfedge(u,p),p,1));
 }
 
 //
@@ -218,19 +211,6 @@ add_edge(CGAL::Polyhedron_3<Gt,I,HDS,A>& g)
   return typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> >::edge_descriptor(
     g.hds().edges_push_back(typename CGAL::Polyhedron_3<Gt,I,HDS,A>::Halfedge(), 
                             typename CGAL::Polyhedron_3<Gt,I,HDS,A>::Halfedge()));
-}
-
-template<class Gt, class I, CGAL_HDS_PARAM_, class A>
-typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> >::edge_descriptor
-add_edge(typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> >::vertex_descriptor u
-         , typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> >::vertex_descriptor v
-         , CGAL::Polyhedron_3<Gt,I,HDS,A>& g)
-{
-  typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> >::edge_descriptor 
-    e = add_edge(g);
-  set_target(halfedge(e, g), u, g);
-  set_target(opposite(halfedge(e, g), g), v, g);
-  return e;
 }
 
 template<class Gt, class I, CGAL_HDS_PARAM_, class A>
@@ -279,6 +259,13 @@ add_face(CGAL::Polyhedron_3<Gt,I,HDS,A>& g)
   return g.hds().faces_push_back(typename CGAL::Polyhedron_3<Gt,I,HDS,A>::HalfedgeDS::Face());
 }
 
+template<class Gt, class I, CGAL_HDS_PARAM_, class A, class InputIterator>
+typename boost::graph_traits< CGAL::Polyhedron_3<Gt, I, HDS, A> >::face_descriptor
+add_face(InputIterator begin, InputIterator end, CGAL::Polyhedron_3<Gt, I, HDS, A>& g)
+{
+  return g.hds().add_facet(begin, end);
+}
+
 template<class Gt, class I, CGAL_HDS_PARAM_, class A>
 void
 remove_face(typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> >::face_descriptor f
@@ -306,9 +293,11 @@ template<class Gt, class I, CGAL_HDS_PARAM_, class A>
 void
 set_halfedge(typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> >::face_descriptor f
   , typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> >::halfedge_descriptor h
-  , const CGAL::Polyhedron_3<Gt,I,HDS,A>&)
+  , CGAL::Polyhedron_3<Gt,I,HDS,A>& g)
 {
-  f->set_halfedge(h);
+  typedef typename CGAL::Polyhedron_3<Gt, I, HDS, A>::Halfedge_data_structure Hds;
+  CGAL::HalfedgeDS_decorator<Hds> D(g.hds());
+  D.set_face_halfedge(f, h);
 }
 
 template<class Gt, class I, CGAL_HDS_PARAM_, class A>
@@ -346,7 +335,6 @@ typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> >::halfedge_descrip
 halfedge(typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> >::vertex_descriptor v
          , const CGAL::Polyhedron_3<Gt,I,HDS,A>&)
 { 
-  CGAL_assertion(v->halfedge()->vertex() == v);
   return v->halfedge();
 }
 
@@ -408,14 +396,12 @@ prev(typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> >::halfedge_de
 //
 
 template<class Gt, class I, CGAL_HDS_PARAM_, class A>
-std::pair<
-  typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> >::halfedge_iterator
-  , typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> >::halfedge_iterator>
+Iterator_range<typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> >::halfedge_iterator>
 halfedges(const CGAL::Polyhedron_3<Gt,I,HDS,A>& p)
 {
   typedef typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> >::halfedge_iterator Iter;
   CGAL::Polyhedron_3<Gt,I,HDS,A>& ncp = const_cast<CGAL::Polyhedron_3<Gt,I,HDS,A>&>(p);
-  return std::make_pair(Iter(ncp.halfedges_begin()), Iter(ncp.halfedges_end()));
+  return make_range(Iter(ncp.halfedges_begin()), Iter(ncp.halfedges_end()));
 }
 
 template<class Gt, class I, CGAL_HDS_PARAM_, class A>
@@ -443,15 +429,12 @@ halfedge(typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> >::face_de
 }
 
 template<class Gt, class I, CGAL_HDS_PARAM_, class A>
-inline std::pair<typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> const>::face_iterator
-                ,typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> const>::face_iterator
-                >
+inline Iterator_range<typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> const>::face_iterator >
 faces(const CGAL::Polyhedron_3<Gt,I,HDS,A>& p)
 {
   typedef typename boost::graph_traits< CGAL::Polyhedron_3<Gt,I,HDS,A> const>::face_iterator face_iterator;
   CGAL::Polyhedron_3<Gt,I,HDS,A>& ncp = const_cast<CGAL::Polyhedron_3<Gt,I,HDS,A>&>(p);
-  return std::make_pair( face_iterator(ncp.facets_begin()),
-                         face_iterator(ncp.facets_end()));
+  return make_range( face_iterator(ncp.facets_begin()), face_iterator(ncp.facets_end()));
 }
 
 template<class Gt, class I, CGAL_HDS_PARAM_, class A>

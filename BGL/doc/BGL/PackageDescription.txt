@@ -37,7 +37,13 @@
 /// \defgroup PkgBGLHelper Helper Classes
 /// \ingroup PkgBGL
 
+/// \defgroup PkgBGLHelperFct Helper Functions
+/// \ingroup PkgBGL
+
 /// \defgroup PkgBGLIterators Iterators and Circulators
+/// \ingroup PkgBGL
+
+/// \defgroup PkgBGLSelectionFct Selection Functions
 /// \ingroup PkgBGL
 
 /*!
@@ -106,9 +112,10 @@ adapted types are listed here. The pages document which concepts they
 model, the properties they support, and any possible caveats that a
 user might encounter.
 
-- \link BGLArgtGT `boost::graph_traits< CGAL::Arrangement_2<T,DC> >` \endlink
+- \link BGLSMGT  `boost::graph_traits< CGAL::Surface_mesh<P> >` \endlink
 - \link BGLPolyGT  `boost::graph_traits< CGAL::Polyhedron_3<T> >` \endlink
 - \link BGLT2GT `boost::graph_traits< CGAL::Triangulation_2<GT, TDS> >` \endlink
+- \link BGLArgtGT `boost::graph_traits< CGAL::Arrangement_2<T,DC> >` \endlink
 
 ## Helper Classes ##
 - `CGAL::Triangulation_vertex_base_with_id_2`
@@ -118,36 +125,92 @@ user might encounter.
 - `CGAL::HalfedgeDS_halfedge_max_base_with_id`
 - `CGAL::HalfedgeDS_face_max_base_with_id`
 - `CGAL::Polyhedron_items_with_id_3`
+- `CGAL::set_halfedgeds_items_id()`
+- `CGAL::Dual`
 
-## Iterators and Circulators ##
+## Helper Functions ##
+- `CGAL::is_border()`
+- `CGAL::is_border_edge()`
+- `CGAL::is_bivalent()`
+- `CGAL::is_bivalent_mesh()`
+- `CGAL::is_trivalent()`
+- `CGAL::is_trivalent_mesh()`
+- `CGAL::is_isolated_triangle()`
+- `CGAL::is_closed()`
+
+- `CGAL::is_triangle()`
+- `CGAL::is_triangle_mesh()`
+- `CGAL::is_quad()`
+- `CGAL::is_quad_mesh()`
+- `CGAL::is_isolated_quad()`
+
+- `CGAL::is_tetrahedron()`
+- `CGAL::is_hexahedron()`
+- `CGAL::make_triangle()`
+- `CGAL::make_tetrahedron()`
+- `CGAL::make_quad()`
+- `CGAL::make_hexahedron()`
+
+- `CGAL::clear()`
+- `CGAL::copy_face_graph()`
+
+## Iterators ##
 - `CGAL::Halfedge_around_source_iterator`
 - `CGAL::Halfedge_around_target_iterator`
 - `CGAL::Halfedge_around_face_iterator`
+- `CGAL::Vertex_around_target_iterator`
+- `CGAL::Vertex_around_face_iterator`
+- `CGAL::Face_around_face_iterator`
+- `CGAL::Face_around_target_iterator`
+- `CGAL::halfedges_around_source()`
+- `CGAL::halfedges_around_target()`
+- `CGAL::halfedges_around_face()`
+- `CGAL::faces_around_face()`
+- `CGAL::faces_around_target()`
+- `CGAL::vertices_around_face()`
+- `CGAL::vertices_around_target()`
+
+## Circulators ##
 - `CGAL::Halfedge_around_source_circulator`
 - `CGAL::Halfedge_around_target_circulator`
 - `CGAL::Halfedge_around_face_circulator`
-- `CGAL::halfedges_around_source`
-- `CGAL::halfedges_around_target`
-- `CGAL::halfedges_around_face`
+- `CGAL::Vertex_around_target_circulator`
+- `CGAL::Face_around_target_circulator`
+- `CGAL::Face_around_face_circulator`
 
 ## Euler Operations ##
 
-- `CGAL::Euler::join_vertex()`
-- `CGAL::Euler::split_vertex()`
-- `CGAL::Euler::split_edge()`
-- `CGAL::Euler::join_face()`
-- `CGAL::Euler::split_face()`
-- `CGAL::Euler::join_loop()`
-- `CGAL::Euler::split_loop()`
-- `CGAL::Euler::remove_face()`
-- `CGAL::Euler::make_hole()`
 - `CGAL::Euler::add_center_vertex()`
+- `CGAL::Euler::add_edge()`
+- `CGAL::Euler::add_face()`
+- `CGAL::Euler::add_face_to_border()`
+- `CGAL::Euler::add_vertex_and_face_to_border()`
+- `CGAL::Euler::collapse_edge()`
+- `CGAL::Euler::does_satisfy_link_condition()`
+- `CGAL::Euler::fill_hole()`
+- `CGAL::Euler::flip_edge()`
+- `CGAL::Euler::join_face()`
+- `CGAL::Euler::join_loop()`
+- `CGAL::Euler::join_vertex()`
+- `CGAL::Euler::make_hole()`
 - `CGAL::Euler::remove_center_vertex()`
-- `CGAL::Euler::add_vertex_and_face_to_border()` 
-- `CGAL::Euler::add_face_to_border()` 
-- `CGAL::Euler::collapse_edge()` 
-- `CGAL::Euler::safisfies_link_condition()` 
+- `CGAL::Euler::remove_face()`
+- `CGAL::Euler::split_edge()`
+- `CGAL::Euler::split_face()`
+- `CGAL::Euler::split_loop()`
+- `CGAL::Euler::split_vertex()`
 
+## Selection ##
+- `CGAL::expand_face_selection()`
+- `CGAL::reduce_face_selection()`
+- `CGAL::expand_edge_selection()`
+- `CGAL::reduce_edge_selection()`
+- `CGAL::expand_vertex_selection()`
+- `CGAL::reduce_vertex_selection()`
+- `CGAL::select_incident_faces()`
+
+## Miscellaneous ##
+- `CGAL::split_graph_into_polylines()`
 
 */
 

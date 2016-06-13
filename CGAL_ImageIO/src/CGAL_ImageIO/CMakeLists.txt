@@ -3,11 +3,6 @@ message("Configuring libCGAL_ImageIO")
 find_package( OpenGL )
 find_package( ZLIB )
 
-#option(WITH_VTK "Add VTK support to libCGAL_ImageIO." OFF)
-
-if(WITH_VTK)
-  find_package(VTK QUIET)
-endif(WITH_VTK)
 
 if(OPENGL_FOUND)
   message( STATUS "OpenGL include:     ${OPENGL_INCLUDE_DIR}" )
@@ -26,21 +21,6 @@ if(OPENGL_FOUND)
 
   set( CGAL_ImageIO_BASENAME CGAL_ImageIO)
   
-  if(WITH_VTK)
-    if( VTK_FOUND )
-      
-      message(STATUS "VTK-${VTK_MAJOR_VERSION}.${VTK_MINOR_VERSION}.${VTK_BUILD_VERSION} found. Build VTK support in ${CGAL_ImageIO_BASENAME}.")
-      include( ${VTK_USE_FILE} )
-      cache_set(CGAL_ImageIO_3RD_PARTY_DEFINITIONS  ${CGAL_ImageIO_3RD_PARTY_DEFINITIONS} -DCGAL_USE_VTK ${VTK_REQUIRED_CXX_FLAGS})
-      cache_set(CGAL_ImageIO_3RD_PARTY_INCLUDE_DIRS ${CGAL_ImageIO_3RD_PARTY_INCLUDE_DIRS} ${VTK_INCLUDE_DIRS} )
-      cache_set(CGAL_ImageIO_3RD_PARTY_LIBRARIES_DIRS ${CGAL_ImageIO_3RD_PARTY_LIBRARIES_DIRS} ${VTK_LIBRARY_DIRS} )
-      cache_set(CGAL_ImageIO_3RD_PARTY_LIBRARIES    ${CGAL_ImageIO_3RD_PARTY_LIBRARIES}   ${VTK_LIBRARIES}  )
-      
-    else()
-      message(STATUS "VTK not found.")
-    endif()
-  endif()
-  
   if(COMMAND add_config_flag)
     set( CGAL_HAS_IMAGEIO TRUE ) 
     add_config_flag( CGAL_HAS_IMAGEIO )
@@ -48,7 +28,7 @@ if(OPENGL_FOUND)
 
   use_essential_libs()
 
-  include_directories( SYSTEM ${CGAL_3RD_PARTY_INCLUDE_DIRS} ${CGAL_ImageIO_3RD_PARTY_INCLUDE_DIRS} )
+  include_directories( SYSTEM ${CGAL_3RD_PARTY_INCLUDE_DIRS} ${CGAL_ImageIO_3RD_PARTY_INCLUDE_DIRS} .)
   
   link_directories    ( ${CGAL_LIBRARIES_DIR} ${CGAL_3RD_PARTY_LIBRARIES_DIRS} )
 
@@ -58,7 +38,9 @@ if(OPENGL_FOUND)
   
   add_definitions( ${CGAL_3RD_PARTY_DEFINITIONS} ${CGAL_ImageIO_3RD_PARTY_DEFINITIONS} )
   
-  target_link_libraries( CGAL_ImageIO ${CGAL_LIBRARY} ${CGAL_3RD_PARTY_LIBRARIES} ${CGAL_ImageIO_3RD_PARTY_LIBRARIES} )
+  # CGAL_ImageIO only depends on CGAL in DEBUG, but we still link it
+  # in both build types.
+  target_link_libraries( CGAL_ImageIO CGAL ${CGAL_3RD_PARTY_LIBRARIES} ${CGAL_ImageIO_3RD_PARTY_LIBRARIES} )
   
 message("libCGAL_ImageIO is configured")
     

@@ -1,4 +1,5 @@
 include(AddFileDependencies)
+include (CGAL_Macros)
 
   macro(polyhedron_demo_plugin plugin_name plugin_implementation_base_name)
     list_split(option ARGN_TAIL ${ARGN} )
@@ -17,11 +18,12 @@ include(AddFileDependencies)
       set(moc_file_name "")
     else()
       set(moc_file_name ${plugin_implementation_base_name}.moc )
-      qt4_generate_moc( ${plugin_implementation_base_name}.cpp "${CMAKE_CURRENT_BINARY_DIR}/${moc_file_name}" )
+      qt5_generate_moc( ${plugin_implementation_base_name}.cpp "${CMAKE_CURRENT_BINARY_DIR}/${moc_file_name}" )
       add_file_dependencies( ${moc_file_name} "${CMAKE_CURRENT_SOURCE_DIR}/${plugin_implementation_base_name}.cpp" )
     endif()
 
     add_library(${plugin_name} MODULE ${option} ${moc_file_name} ${plugin_implementation_base_name}.cpp ${other_sources})
+    qt5_use_modules(${plugin_name} Widgets Script OpenGL Gui Xml )
     set_property(TARGET ${plugin_name}
       PROPERTY LIBRARY_OUTPUT_DIRECTORY
       "${CGAL_POLYHEDRON_DEMO_PLUGINS_DIR}")
@@ -37,5 +39,7 @@ include(AddFileDependencies)
     endif()
     # Link with CGAL
     target_link_libraries( ${plugin_name} ${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBRARIES} )
-    add_dependencies( ${plugin_name} Polyhedron_3 )
+    if(TARGET Polyhedron_3)
+      add_dependencies( ${plugin_name} Polyhedron_3 )
+    endif()
   endmacro(polyhedron_demo_plugin)

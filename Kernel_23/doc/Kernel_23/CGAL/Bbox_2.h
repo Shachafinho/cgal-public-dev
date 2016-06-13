@@ -18,6 +18,14 @@ public:
 /// @{
 
 /*!
+introduces an \em empty bounding box with lower left
+corner point at \f$ (\infty, \infty) \f$
+and with upper right corner point at
+\f$ (-\infty, -\infty) \f$, \f$ \infty \f$ being
+`std::numeric_limits<double>::%infinity()`.
+*/
+  Bbox_2();
+/*!
 introduces a bounding box `b` with lower left corner at 
 `(xmin, ymin)` and with upper right corner at 
 `(xmax, ymax)`. 
@@ -102,6 +110,8 @@ intersection is non-empty.
 */
 bool do_overlap(const Bbox_2 &bb1, const Bbox_2 &bb2);
 
+/// @}
+
 /*!
 returns the bounding box of the objects in the range `[first,past_end[`.
 Each object in the range must have a member function `BBox_2 bbox()`
@@ -124,6 +134,5 @@ operator returning the bounding box of each object in the range.
 template<class InputIterator, class Traits>
 Bbox_2 bbox_2(InputIterator begin, InputIterator past_end, const Traits& traits);
 
-/// @}
 
 } /* end namespace CGAL */

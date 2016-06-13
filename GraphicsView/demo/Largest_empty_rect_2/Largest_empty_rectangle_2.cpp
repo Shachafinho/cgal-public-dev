@@ -8,6 +8,7 @@
 #include <QtGui>
 #include <QString>
 #include <QFileDialog>
+#include <QInputDialog>
 #include <QGraphicsRectItem>
 #include <QGraphicsLineItem>
 
@@ -60,8 +61,9 @@ private:
 
     G pg(radius);
     bool ok = false;
+
     const int number_of_points = 
-      QInputDialog::getInteger(this, 
+      QInputDialog::getInt(this, 
                                tr("Number of random points"),
                                tr("Enter number of random points"),
                                100,
@@ -86,13 +88,13 @@ private:
     
     // default cursor
     QApplication::restoreOverrideCursor();
-    emit(changed());
+    Q_EMIT( changed());
   }
 
 public:
   MainWindow();
 
-public slots:
+public Q_SLOTS:
 
   void on_actionClear_triggered();
 
@@ -106,7 +108,7 @@ public slots:
 
   void update_largest_empty_rectangle();
 
-signals:
+Q_SIGNALS:
   void changed();
 };
 
@@ -122,11 +124,14 @@ MainWindow::MainWindow()
   rgi = new QGraphicsRectItem(convert(square));
 
   Point_2 bl(-1,-1), br(1,-1), tl(-1,1), tr(1,1);
-  
+
+
   frame[0] = new QGraphicsLineItem(convert(Segment_2(bl, br)));
   frame[1] = new QGraphicsLineItem(convert(Segment_2(br, tr)));
   frame[2] = new QGraphicsLineItem(convert(Segment_2(tr, tl)));
   frame[3] = new QGraphicsLineItem(convert(Segment_2(tl, bl)));
+  for(int i=0; i<4; i++)
+    frame[i]->setPen(QPen(::Qt::black, 0));
 
   QObject::connect(this, SIGNAL(changed()),
 		   pgi, SLOT(modelChanged()));
@@ -136,6 +141,7 @@ MainWindow::MainWindow()
 
   pgi->setVerticesPen(QPen(Qt::red, 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
   rgi->setBrush(QBrush(Qt::cyan));
+  rgi->setPen(QPen(::Qt::black, 0));
   scene.addItem(pgi);
   scene.addItem(rgi);
   scene.addItem(frame[0]);
@@ -183,7 +189,7 @@ MainWindow::MainWindow()
 
 /* 
  *  Qt Automatic Connections
- *  http://doc.trolltech.com/4.4/designer-using-a-component.html#automatic-connections
+ *  http://doc.qt.io/qt-5/designer-using-a-ui-file.html#automatic-connections
  * 
  *  setupUi(this) generates connections to the slots named
  *  "on_<action_name>_<signal_name>"
@@ -203,7 +209,7 @@ MainWindow::processInput(CGAL::Object o)
         ler.insert(p);
       }
     }
-    emit(changed());
+    Q_EMIT( changed());
   }
 
 }
@@ -220,7 +226,7 @@ void
 MainWindow::on_actionClear_triggered()
 {
   clear();
-  emit(changed());
+  Q_EMIT( changed());
 }
 
 void
@@ -275,9 +281,9 @@ int main(int argc, char **argv)
   app.setOrganizationName("GeometryFactory");
   app.setApplicationName("Largest_empty_rectangle_2 demo");
 
-  // Import resources from libCGALQt4.
-  // See http://doc.trolltech.com/4.4/qdir.html#Q_INIT_RESOURCE
-  CGAL_QT4_INIT_RESOURCES;
+  // Import resources from libCGAL (Qt5).
+  // See http://doc.qt.io/qt-5/qdir.html#Q_INIT_RESOURCE
+  CGAL_QT_INIT_RESOURCES;
   Q_INIT_RESOURCE(Largest_empty_rectangle_2);
 
   MainWindow mainWindow;

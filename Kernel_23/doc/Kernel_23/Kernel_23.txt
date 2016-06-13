@@ -297,22 +297,27 @@ kernels.
 <LI>They are all %Cartesian kernels.
 <LI>They all support constructions of points from <TT>double</TT> %Cartesian
 coordinates.
-<LI>All these 3 kernels provide exact geometric predicates.
+<LI>All these 5 kernels provide exact geometric predicates.
 <LI>They handle geometric constructions differently:
 <UL>
+<LI>`Exact_predicates_inexact_constructions_kernel`: provides exact
+geometric predicates, but geometric constructions may be inexact due to
+round-off errors. It is however enough for many \cgal algorithms, and
+faster than the kernels with exact constructions below.
 <LI>`Exact_predicates_exact_constructions_kernel`: provides exact
 geometric constructions, in addition to exact geometric predicates.
 <LI>`Exact_predicates_exact_constructions_kernel_with_sqrt`:
 same as `Exact_predicates_exact_constructions_kernel`, but the
-number type it provides
-(`Exact_predicates_exact_constructions_kernel_with_sqrt::FT`)
-supports the square root operation exactly
+number type is a model of concept `FieldWithSqrt`. 
 \cgalFootnote{Currently it requires having either LEDA or CORE installed.}.
-<LI>`Exact_predicates_inexact_constructions_kernel`: provides exact
-geometric predicates, but geometric constructions may be inexact due to
-round-off errors. It is however enough for most \cgal algorithms, and
-faster than both `Exact_predicates_exact_constructions_kernel` and
-`Exact_predicates_exact_constructions_kernel_with_sqrt`.
+<LI>`Exact_predicates_exact_constructions_kernel_with_kth_root`
+same as `Exact_predicates_exact_constructions_kernel`, but the
+number type is a model of concept `FieldWithKthRoot`. 
+\cgalFootnote{Currently it requires having either LEDA or CORE installed.}.
+<LI>`Exact_predicates_exact_constructions_kernel_with_root_of`:
+same as `Exact_predicates_exact_constructions_kernel`, but the
+number type is a model of concept `FieldWithRootOf`. 
+\cgalFootnote{Currently it requires having either LEDA or CORE installed.}.
 </UL>
 </UL>
 
@@ -735,7 +740,7 @@ struct Intersection_visitor : public boost::static_visitor<> {
 template <class R>
 void foo(Segment_2<R> seg, Line_2<R> lin)
 {
-  CGAL::Object obj = intersection(seg1, seg2);
+  CGAL::Object obj = intersection(seg, lin);
   if(const Point_2* foo = object_cast<Point_2>(&obj)) {
     // Point_2 
   } else if(const Segment_2* foo = object_cast<Segment_2>(&obj)) {
@@ -747,9 +752,9 @@ void foo(Segment_2<R> seg, Line_2<R> lin)
   // becomes
   auto result = intersection(seg, lin);
   if(result) {
-    if(const Point_2* foo = boost::get<Point_2>(&*obj)) {
+    if(const Point_2* foo = boost::get<Point_2>(&*result)) {
       // Point_2 
-    } else if(const Segment_2* foo = boost::get<Segment_2>(&*obj)) {
+    } else if(const Segment_2* foo = boost::get<Segment_2>(&*result)) {
       // Segment_2 
     }
   } else {

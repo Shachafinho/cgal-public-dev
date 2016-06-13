@@ -37,6 +37,7 @@
 #include <CGAL/IO/Verbose_ostream.h>
 #include <CGAL/Polyhedron_traits_3.h>
 
+
 namespace CGAL {
 
 template <class VertexBase>
@@ -506,6 +507,7 @@ public:
 
     // Geometry
     typedef typename Traits::Point_3              Point_3;
+    typedef Point_3                               Point;
     typedef typename Traits::Plane_3              Plane_3;
     // No longer required.
     //typedef typename Traits::Normal               Normal;
@@ -784,6 +786,8 @@ public:
         // number of facets.
 
     bool empty() const { return size_of_halfedges() == 0; }
+
+    bool is_empty() const { return size_of_halfedges() == 0; }
 
     size_type capacity_of_vertices() const {
         // space reserved for vertices.
@@ -1536,5 +1540,7 @@ public:
 #ifndef CGAL_NO_DEPRECATED_CODE
 #include <CGAL/boost/graph/graph_traits_Polyhedron_3.h>
 #endif
+
+#include <CGAL/IO/Polyhedron_iostream.h>
 
 #endif // CGAL_POLYHEDRON_3_H //

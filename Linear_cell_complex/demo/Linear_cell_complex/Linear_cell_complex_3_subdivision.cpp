@@ -30,7 +30,7 @@ public:
    * @param amark is a mark designing old darts (i.e. darts not created during
    *        the triangulation step)
    */
-  Smooth_old_vertex (LCC & alcc, unsigned int /* TODO amark*/):mlcc (alcc)
+  Smooth_old_vertex (LCC & alcc, LCC::size_type /* TODO amark*/):mlcc (alcc)
   {
   }
 
@@ -82,7 +82,7 @@ flip_edge (LCC & m, Dart_handle d)
   CGAL_assertion ( !m.is_free(d,1) && !m.is_free(d,0) );
   CGAL_assertion ( !m.is_free(m.beta(d,2), 0) && !m.is_free(m.beta(d, 2), 1) );
   
-  if (!CGAL::is_removable<LCC,1>(m,d)) return LCC::null_handle;
+  if (!m.is_removable<1>(d)) return LCC::null_handle;
 
   Dart_handle d1 = m.beta(d,1);
   Dart_handle d2 = m.beta(d,2,0);
@@ -128,8 +128,8 @@ subdivide_lcc_3 (LCC & m)
   if (m.number_of_darts () == 0)
     return;
 
-  unsigned int mark = m.get_new_mark ();
-  unsigned int treated = m.get_new_mark ();
+  LCC::size_type mark = m.get_new_mark ();
+  LCC::size_type treated = m.get_new_mark ();
   m.negate_mark (mark);  // All the old darts are marked in O(1).
 
   // 1) We smoth the old vertices.

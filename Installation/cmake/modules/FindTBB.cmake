@@ -102,6 +102,17 @@ if (WIN32)
     if(MSVC11)
         set(_TBB_COMPILER "vc11")
     endif(MSVC11)
+    if(MSVC12)
+	set(_TBB_COMPILER "vc12")
+    endif(MSVC12)
+    #note there was no MSVC13
+    if(MSVC14)
+	if(RUNNING_CGAL_AUTO_TEST)
+	    set (TBB_FOUND "NO")
+	    return()#binaries for TBB not publicly available when CGAL-4.7 is published
+	endif(RUNNING_CGAL_AUTO_TEST)
+	message(STATUS "[Warning] FindTBB.cmake: TBB 4.4 (latest available when CGAL-4.7 is published) does not provide support for MSVC 2015.")
+    endif(MSVC14)
     # Todo: add other Windows compilers such as ICL.
     set(_TBB_ARCHITECTURE ${TBB_ARCHITECTURE})
 endif (WIN32)
@@ -207,11 +218,7 @@ macro(TBB_CORRECT_LIB_DIR var_name)
         string(REPLACE em64t "${_TBB_ARCHITECTURE}" ${var_name} ${${var_name}})
 #    endif (NOT "${_TBB_ARCHITECTURE}" STREQUAL "em64t")
     string(REPLACE ia32 "${_TBB_ARCHITECTURE}" ${var_name} ${${var_name}})
-    string(REPLACE vc7.1 "${_TBB_COMPILER}" ${var_name} ${${var_name}})
-    string(REPLACE vc8 "${_TBB_COMPILER}" ${var_name} ${${var_name}})
-    string(REPLACE vc9 "${_TBB_COMPILER}" ${var_name} ${${var_name}})
-    string(REPLACE vc10 "${_TBB_COMPILER}" ${var_name} ${${var_name}})
-    string(REPLACE vc11 "${_TBB_COMPILER}" ${var_name} ${${var_name}})
+    string(REGEX REPLACE "vc[0-9]+(\.[0-9]+)?" "${_TBB_COMPILER}" ${var_name} ${${var_name}})
 endmacro(TBB_CORRECT_LIB_DIR var_content)
 
 
@@ -219,10 +226,20 @@ endmacro(TBB_CORRECT_LIB_DIR var_content)
 set (TBB_INC_SEARCH_DIR ${_TBB_INSTALL_DIR}/include)
 # Jiri: tbbvars now sets the CPATH environment variable to the directory
 #       containing the headers.
+#  LR: search first with NO_DEFAULT_PATH...
 find_path(TBB_INCLUDE_DIR
     tbb/task_scheduler_init.h
     PATHS ${TBB_INC_SEARCH_DIR} ENV CPATH
+    NO_DEFAULT_PATH
 )
+if(NOT TBB_INCLUDE_DIR)
+#  LR: ... and then search again with NO_DEFAULT_PATH if nothing was found in
+#  hinted paths
+  find_path(TBB_INCLUDE_DIR
+      tbb/task_scheduler_init.h
+      PATHS ${TBB_INC_SEARCH_DIR} ENV CPATH
+  )
+endif()
 mark_as_advanced(TBB_INCLUDE_DIR)
 
 
@@ -258,12 +275,23 @@ list(APPEND _TBB_LIBRARY_DIR ${_TBB_INSTALL_DIR}/lib)
 #       and LD_LIBRARY_PATH environment variables is now even more important
 #       that tbbvars doesn't export TBB_ARCH_PLATFORM and it facilitates
 #       the use of TBB built from sources.
+#  LR: search first with NO_DEFAULT_PATH...
 find_library(TBB_RELEASE_LIBRARY ${_TBB_LIB_RELEASE_NAME} HINTS ${_TBB_LIBRARY_DIR}
-        PATHS ENV LIBRARY_PATH ENV LD_LIBRARY_PATH)
+        PATHS ENV LIBRARY_PATH ENV LD_LIBRARY_PATH NO_DEFAULT_PATH)
 find_library(TBB_MALLOC_RELEASE_LIBRARY ${_TBB_LIB_MALLOC_RELEASE_NAME} HINTS ${_TBB_LIBRARY_DIR}
-        PATHS ENV LIBRARY_PATH ENV LD_LIBRARY_PATH)
+        PATHS ENV LIBRARY_PATH ENV LD_LIBRARY_PATH NO_DEFAULT_PATH)
 find_library(TBB_MALLOCPROXY_RELEASE_LIBRARY ${_TBB_LIB_MALLOCPROXY_RELEASE_NAME} HINTS ${_TBB_LIBRARY_DIR}
-        PATHS ENV LIBRARY_PATH ENV LD_LIBRARY_PATH)
+        PATHS ENV LIBRARY_PATH ENV LD_LIBRARY_PATH NO_DEFAULT_PATH)
+if(NOT TBB_RELEASE_LIBRARY OR NOT TBB_MALLOC_RELEASE_LIBRARY OR NOT TBB_MALLOCPROXY_RELEASE_LIBRARY)
+# LR: ... and then search again with NO_DEFAULT_PATH if nothing was found
+#  in hinted paths
+    find_library(TBB_RELEASE_LIBRARY ${_TBB_LIB_RELEASE_NAME} HINTS ${_TBB_LIBRARY_DIR}
+            PATHS ENV LIBRARY_PATH ENV LD_LIBRARY_PATH)
+    find_library(TBB_MALLOC_RELEASE_LIBRARY ${_TBB_LIB_MALLOC_RELEASE_NAME} HINTS ${_TBB_LIBRARY_DIR}
+            PATHS ENV LIBRARY_PATH ENV LD_LIBRARY_PATH)
+    find_library(TBB_MALLOCPROXY_RELEASE_LIBRARY ${_TBB_LIB_MALLOCPROXY_RELEASE_NAME} HINTS ${_TBB_LIBRARY_DIR}
+            PATHS ENV LIBRARY_PATH ENV LD_LIBRARY_PATH)
+endif()
 
 #Extract path from TBB_RELEASE_LIBRARY name
 get_filename_component(TBB_RELEASE_LIBRARY_DIR ${TBB_RELEASE_LIBRARY} PATH)
@@ -276,11 +304,19 @@ mark_as_advanced(TBB_RELEASE_LIBRARY TBB_MALLOC_RELEASE_LIBRARY TBB_MALLOCPROXY_
 #-- Look for debug libraries
 # Jiri: Changed the same way as for the release libraries.
 find_library(TBB_DEBUG_LIBRARY ${_TBB_LIB_DEBUG_NAME} HINTS ${_TBB_LIBRARY_DIR}
-        PATHS ENV LIBRARY_PATH ENV LD_LIBRARY_PATH)
+        PATHS ENV LIBRARY_PATH ENV LD_LIBRARY_PATH NO_DEFAULT_PATH)
 find_library(TBB_MALLOC_DEBUG_LIBRARY ${_TBB_LIB_MALLOC_DEBUG_NAME} HINTS ${_TBB_LIBRARY_DIR}
-        PATHS ENV LIBRARY_PATH ENV LD_LIBRARY_PATH)
+        PATHS ENV LIBRARY_PATH ENV LD_LIBRARY_PATH NO_DEFAULT_PATH)
 find_library(TBB_MALLOCPROXY_DEBUG_LIBRARY ${_TBB_LIB_MALLOCPROXY_DEBUG_NAME} HINTS ${_TBB_LIBRARY_DIR}
-        PATHS ENV LIBRARY_PATH ENV LD_LIBRARY_PATH)
+        PATHS ENV LIBRARY_PATH ENV LD_LIBRARY_PATH NO_DEFAULT_PATH)
+if(NOT TBB_DEBUG_LIBRARY OR NOT TBB_MALLOC_DEBUG_LIBRARY OR NOT TBB_MALLOCPROXY_DEBUG_LIBRARY)
+    find_library(TBB_DEBUG_LIBRARY ${_TBB_LIB_DEBUG_NAME} HINTS ${_TBB_LIBRARY_DIR}
+            PATHS ENV LIBRARY_PATH ENV LD_LIBRARY_PATH)
+    find_library(TBB_MALLOC_DEBUG_LIBRARY ${_TBB_LIB_MALLOC_DEBUG_NAME} HINTS ${_TBB_LIBRARY_DIR}
+            PATHS ENV LIBRARY_PATH ENV LD_LIBRARY_PATH)
+    find_library(TBB_MALLOCPROXY_DEBUG_LIBRARY ${_TBB_LIB_MALLOCPROXY_DEBUG_NAME} HINTS ${_TBB_LIBRARY_DIR}
+            PATHS ENV LIBRARY_PATH ENV LD_LIBRARY_PATH)
+endif()
 
 # Jiri: Self-built TBB stores the debug libraries in a separate directory.
 #       Extract path from TBB_DEBUG_LIBRARY name

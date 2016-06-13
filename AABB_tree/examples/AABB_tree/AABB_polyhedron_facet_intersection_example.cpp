@@ -1,10 +1,12 @@
 // Author(s) : Camille Wormser, Pierre Alliez
 
 #include <iostream>
+#include <list>
 
 #include <CGAL/Simple_cartesian.h>
 #include <CGAL/AABB_tree.h>
 #include <CGAL/AABB_traits.h>
+#include <CGAL/Polyhedron_3.h>
 #include <CGAL/boost/graph/graph_traits_Polyhedron_3.h>
 #include <CGAL/AABB_face_graph_triangle_primitive.h>
 
@@ -13,6 +15,7 @@ typedef K::Point_3 Point;
 typedef K::Plane_3 Plane;
 typedef K::Vector_3 Vector;
 typedef K::Segment_3 Segment;
+typedef K::Ray_3 Ray;
 typedef CGAL::Polyhedron_3<K> Polyhedron;
 typedef CGAL::AABB_face_graph_triangle_primitive<Polyhedron> Primitive;
 typedef CGAL::AABB_traits<K, Primitive> Traits;
@@ -55,8 +58,10 @@ int main()
     if(intersection)
     {
         // gets intersection object
-      if(boost::get<Point>(&(intersection->first)))
-        std::cout << "intersection object is a point" << std::endl;
+      const Point* p = boost::get<Point>(&(intersection->first));
+      if(p)
+        std::cout << "intersection object is a point " << *p << std::endl;
+
     }
 
     // computes all intersections with segment query (as pairs object - primitive_id)
@@ -80,6 +85,6 @@ int main()
       if(boost::get<Segment>(&(plane_intersection->first)))
             std::cout << "intersection object is a segment" << std::endl;
     }
-
+    
     return EXIT_SUCCESS;
 }

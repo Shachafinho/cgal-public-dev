@@ -12,14 +12,19 @@
 
 #include <map>
 #include <queue>
-#include "One_ring_iterators.h"
+
+#include <CGAL/boost/graph/selection.h>
 
 class SCENE_POLYHEDRON_ITEM_K_RING_SELECTION_EXPORT Scene_polyhedron_item_k_ring_selection 
   : public QObject
 {
   Q_OBJECT
 public:
-  struct Active_handle { enum Type{ VERTEX = 0, FACET = 1, EDGE = 2 }; };
+  struct Active_handle {
+    enum Type{ VERTEX = 0, FACET = 1, EDGE = 2 , CONNECTED_COMPONENT = 3, PATH = 4};
+  };
+
+  typedef boost::graph_traits<Polyhedron>::edge_descriptor edge_descriptor;
 
   // Hold mouse keyboard state together
   struct Mouse_keyboard_state
@@ -29,111 +34,228 @@ public:
   };
 
   Mouse_keyboard_state  state;
-
+  QMainWindow* mainwindow;
   Active_handle::Type    active_handle_type;
   int                    k_ring;
   Scene_polyhedron_item* poly_item;
+  bool is_active;
+  bool is_current_selection;
 
   Scene_polyhedron_item_k_ring_selection() {}
 
   Scene_polyhedron_item_k_ring_selection
     (Scene_polyhedron_item* poly_item, QMainWindow* mw, Active_handle::Type aht, int k_ring)
+      :is_active(false),is_current_selection(true), is_edit_mode(false)
   {
     init(poly_item, mw, aht, k_ring);
   }
+
+  void setEditMode(bool b) { is_edit_mode = b; }
 
   void init(Scene_polyhedron_item* poly_item, QMainWindow* mw, Active_handle::Type aht, int k_ring) {
     this->poly_item = poly_item;
     this->active_handle_type = aht;
     this->k_ring = k_ring;
-
+    mainwindow = mw;
     poly_item->enable_facets_picking(true);
     poly_item->set_color_vector_read_only(true);
 
     QGLViewer* viewer = *QGLViewer::QGLViewerPool().begin();
     viewer->installEventFilter(this);
     mw->installEventFilter(this);
-
+#if QGLVIEWER_VERSION >= 0x020501
+    viewer->setMouseBindingDescription(Qt::Key_D, Qt::ShiftModifier, Qt::LeftButton, "(When in selection plugin) Removes the clicked primitive from the selection. ");
+#else
+    viewer->setMouseBindingDescription(Qt::SHIFT + Qt::LeftButton,  "(When in selection plugin) When D is pressed too, removes the clicked primitive from the selection. ");
+#endif
     connect(poly_item, SIGNAL(selected_vertex(void*)), this, SLOT(vertex_has_been_selected(void*)));
     connect(poly_item, SIGNAL(selected_facet(void*)), this, SLOT(facet_has_been_selected(void*)));
     connect(poly_item, SIGNAL(selected_edge(void*)), this, SLOT(edge_has_been_selected(void*)));
   }
-
-public slots:
+  void setCurrentlySelected(bool b)
+  {
+    is_current_selection = b;
+  }
+public Q_SLOTS:
   // slots are called by signals of polyhedron_item
   void vertex_has_been_selected(void* void_ptr) 
   {
-    if(active_handle_type != Active_handle::VERTEX) { return; }
-    process_selection( static_cast<Polyhedron::Vertex*>(void_ptr)->halfedge()->vertex() );
+    is_active=true;
+    if(active_handle_type == Active_handle::VERTEX || active_handle_type == Active_handle::PATH)
+      process_selection( static_cast<Polyhedron::Vertex*>(void_ptr)->halfedge()->vertex() );
+    updateIsTreated();
   }
   void facet_has_been_selected(void* void_ptr)
   {
-    if(active_handle_type != Active_handle::FACET) { return; }
-    process_selection( static_cast<Polyhedron::Facet*>(void_ptr)->halfedge()->facet() );
+    is_active=true;
+    if (active_handle_type == Active_handle::FACET
+      || active_handle_type == Active_handle::CONNECTED_COMPONENT)
+      process_selection(static_cast<Polyhedron::Facet*>(void_ptr)->halfedge()->facet());
+    updateIsTreated();
   }
   void edge_has_been_selected(void* void_ptr) 
   {
-    if(active_handle_type != Active_handle::EDGE) { return; }
-    process_selection( static_cast<Polyhedron::Halfedge*>(void_ptr)->opposite()->opposite() );
+    is_active=true;
+    if(active_handle_type == Active_handle::EDGE)
+      process_selection( edge(static_cast<Polyhedron::Halfedge*>(void_ptr)->opposite()->opposite(), *poly_item->polyhedron()) );
+    updateIsTreated();
   }
 
-signals:
-  void selected(const std::map<Polyhedron::Vertex_handle, int>&);
-  void selected(const std::map<Polyhedron::Facet_handle, int>&);
-  void selected(const std::map<Polyhedron::Halfedge_handle, int>&);
+
+Q_SIGNALS:
+  void selected(const std::set<Polyhedron::Vertex_handle>&);
+  void selected(const std::set<Polyhedron::Facet_handle>&);
+  void selected(const std::set<edge_descriptor>&);
+  void toogle_insert(const bool);
+  void endSelection();
+  void resetIsTreated(); 
+  void isCurrentlySelected(Scene_polyhedron_item_k_ring_selection*);
 
 protected:
+
+  void updateIsTreated()
+  {
+    static ushort i = 0;
+    i++;
+    if(i==3)
+    {
+      i = 0;
+      Q_EMIT resetIsTreated();
+    }
+  }
   template<class HandleType>
   void process_selection(HandleType clicked) {
-    const std::map<HandleType, int>& selection = extract_k_ring(clicked, k_ring);
-    emit selected(selection);
+    const std::set<HandleType>& selection = extract_k_ring(clicked, k_ring);
+    Q_EMIT selected(selection);
   }
 
-  template<class HandleType>
-  std::map<HandleType, int> extract_k_ring(HandleType v, int k)
-  {
-    std::map<HandleType, int>  D;
-    std::queue<HandleType>     Q;
-    Q.push(v); D[v] = 0;
-
-    int dist_v;
-    while( !Q.empty() && (dist_v = D[Q.front()]) < k ) {
-      v = Q.front();
-      Q.pop();
-
-      for(One_ring_iterator<HandleType> circ(v); circ; ++circ)
-      {
-        HandleType new_v = circ;
-        if(D.insert(std::make_pair(new_v, dist_v + 1)).second) {
-          Q.push(new_v);
-        }
-      }
+  template <class Handle>
+  struct Is_selected_from_set{
+    std::set<Handle>& selection;
+    Is_selected_from_set(std::set<Handle>& selection)
+      :selection(selection) {}
+    friend bool get(Is_selected_from_set<Handle> map, Handle k)
+    {
+      return map.selection.count(k);
     }
-    return D;
+    friend void put(Is_selected_from_set<Handle> map, Handle k, bool b)
+    {
+      if (b)
+        map.selection.insert(k);
+      else
+        map.selection.erase(k);
+    }
+  };
+
+  std::set<Polyhedron::Vertex_handle>
+  extract_k_ring(Polyhedron::Vertex_handle clicked, unsigned int k)
+  {
+    std::set<Polyhedron::Vertex_handle> selection;
+    selection.insert(clicked);
+    if (k>0)
+      CGAL::expand_vertex_selection(CGAL::make_array(clicked),
+                                    *poly_item->polyhedron(),
+                                    k,
+                                    Is_selected_from_set<Polyhedron::Vertex_handle>(selection),
+                                    CGAL::Emptyset_iterator());
+
+    return selection;
   }
 
-  bool eventFilter(QObject* /*target*/, QEvent *event)
+  std::set<Polyhedron::Facet_handle>
+  extract_k_ring(Polyhedron::Facet_handle clicked, unsigned int k)
+  {
+    std::set<Polyhedron::Facet_handle> selection;
+    selection.insert(clicked);
+    if (k>0)
+      CGAL::expand_face_selection(CGAL::make_array(clicked),
+                                  *poly_item->polyhedron(),
+                                  k,
+                                  Is_selected_from_set<Polyhedron::Facet_handle>(selection),
+                                  CGAL::Emptyset_iterator());
+
+    return selection;
+  }
+
+  std::set<edge_descriptor>
+  extract_k_ring(edge_descriptor clicked, unsigned int k)
+  {
+    std::set<edge_descriptor> selection;
+    selection.insert(clicked);
+
+    if (k>0)
+      CGAL::expand_edge_selection(CGAL::make_array(clicked),
+                                  *poly_item->polyhedron(),
+                                  k,
+                                  Is_selected_from_set<edge_descriptor>(selection),
+                                  CGAL::Emptyset_iterator());
+    return selection;
+  }
+
+
+  bool eventFilter(QObject* target, QEvent *event)
   {
     // This filter is both filtering events from 'viewer' and 'main window'
+
     // key events
-    if(event->type() == QEvent::KeyPress || event->type() == QEvent::KeyRelease)  {
+      if(event->type() == QEvent::KeyPress || event->type() == QEvent::KeyRelease)  {
       QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
       Qt::KeyboardModifiers modifiers = keyEvent->modifiers();
 
       state.shift_pressing = modifiers.testFlag(Qt::ShiftModifier);
     }
+
+    if(event->type() == QEvent::KeyPress
+            && state.shift_pressing
+            && static_cast<QKeyEvent*>(event)->key()==Qt::Key_D)
+    {
+     Q_EMIT toogle_insert(false);
+    }
+    else if(event->type() == QEvent::KeyRelease
+            && static_cast<QKeyEvent*>(event)->key()==Qt::Key_D)
+    {
+     Q_EMIT toogle_insert(true);
+    }
     // mouse events
     if(event->type() == QEvent::MouseButtonPress || event->type() == QEvent::MouseButtonRelease) {
+      if(!state.shift_pressing && target == mainwindow)
+      {
+        QGLViewer* viewer = *QGLViewer::QGLViewerPool().begin();
+        viewer->setFocus();
+        return false;
+      }
       QMouseEvent* mouse_event = static_cast<QMouseEvent*>(event);
       if(mouse_event->button() == Qt::LeftButton) {
         state.left_button_pressing = event->type() == QEvent::MouseButtonPress;
-      }   
+        if (!state.left_button_pressing)
+          if (is_active)
+          {
+            Q_EMIT endSelection();
+            is_active=false;
+          }
+      }
+      //to avoid the contextual menu to mess up the states.
+      else if(mouse_event->button() == Qt::RightButton) {
+        state.left_button_pressing = false;
+        state.shift_pressing = false;
+      }
     }
 
-    // use mouse move event for paint-like selection
-    if(event->type() == QEvent::MouseMove &&
-      (state.shift_pressing && state.left_button_pressing) )    
-    { // paint with mouse move event 
+    // if not in edit mode, use mouse move event for paint-like selection
+    if( (!is_edit_mode && event->type() == QEvent::MouseMove && state.shift_pressing && state.left_button_pressing)
+         ||
+         (event->type() == QEvent::MouseButtonPress && static_cast<QMouseEvent*>(event)->button() == Qt::LeftButton && state.shift_pressing ))
+    {
+      Q_EMIT isCurrentlySelected(this);
+      if(!is_current_selection)
+        return false;
+      if(target == mainwindow)
+      {
+        QGLViewer* viewer = *QGLViewer::QGLViewerPool().begin();
+        viewer->setFocus();
+        return false;
+      }
+      // paint with mouse move event
       QMouseEvent* mouse_event = static_cast<QMouseEvent*>(event);
       QGLViewer* viewer = *QGLViewer::QGLViewerPool().begin();
       qglviewer::Camera* camera = viewer->camera();
@@ -149,6 +271,8 @@ protected:
     }//end MouseMove
     return false;
   }
+
+  bool is_edit_mode;
 };
 
 #endif

@@ -36,20 +36,13 @@ namespace CGAL {
              >
   class Polyhedron_3;
   
-// changed since CGAL-3.8-Ic-8
-#if CGAL_VERSION_NR > 1030800008 
   class Epick;
-#endif
 } // end namespace CGAL
 
 // kernel
 namespace polyhedron_type_fwd_h {
 // changed since CGAL-3.8-Ic-8
-#if CGAL_VERSION_NR > 1030800008 
   typedef CGAL::Epick K1;
-#else
-  typedef CGAL::Filtered_kernel< CGAL::Simple_cartesian<double>, true > K1;
-#endif
   typedef CGAL::Mesh_3::Robust_intersection_traits_3<K1> Kernel;
 }
 
@@ -60,8 +53,10 @@ namespace polyhedron_type_fwd_h {
 #endif // USE_FORWARD_DECL
 
 // surface mesh
+typedef int Patch_id;
+
 typedef CGAL::Polyhedron_3<polyhedron_type_fwd_h::Kernel,
-                           Polyhedron_demo_items<int>,
+                           Polyhedron_demo_items<Patch_id>,
                            // CGAL::Polyhedron_items_3,
                            CGAL::HalfedgeDS_default,
                            std::allocator<int> > Polyhedron;

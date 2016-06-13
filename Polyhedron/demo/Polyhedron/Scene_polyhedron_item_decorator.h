@@ -5,7 +5,7 @@
 
 // This class is a decorator for Scene_polyhedron_item yet it does not inherit it but Scene_item
 class SCENE_POLYHEDRON_ITEM_DECORATOR_EXPORT Scene_polyhedron_item_decorator 
-  : public Scene_item {
+  : public CGAL::Three::Scene_item {
   Q_OBJECT
 public:  
   /// Create an Scene_polyhedron_item_decorator from a Scene_polyhedron_item.
@@ -29,9 +29,9 @@ public:
   // Indicate if rendering mode is supported
   bool supportsRenderingMode(RenderingMode m) const { return (m!=PointsPlusNormals && m!=Splatting); }
   // Points/Wireframe/Flat/Gouraud OpenGL drawing in a display list
-  // dispatch to poly_item direct_draw and direct_draw_edges
+  // dispatch to poly_item direct_draw and direct_drawEdges
   void draw() const;
-  void draw_edges() const;
+  void drawEdges() const;
 
   // Get wrapped polyhedron
   Polyhedron*       polyhedron();
@@ -43,13 +43,13 @@ public:
   // Get dimensions
   bool isFinite() const { return true; }
   bool isEmpty() const;
-  Bbox bbox() const;
+  void compute_bbox() const;
 
   bool delete_item() { return delete_poly_item; }
   void set_delete_item(bool delete_item) { delete_poly_item = delete_item; }
 
-public slots:
-  void changed();
+public Q_SLOTS:
+  void invalidateOpenGLBuffers();
   void select(double orig_x,
               double orig_y,
               double orig_z,

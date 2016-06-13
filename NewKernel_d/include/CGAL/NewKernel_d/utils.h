@@ -21,6 +21,13 @@
 #define CGAL_MARCUTILS
 
 #include <CGAL/config.h>
+
+#if defined(BOOST_MSVC)
+#  pragma warning(push)
+#  pragma warning(disable:4003) // not enough actual parameters for macro 'BOOST_PP_EXPAND_I'
+                                // http://lists.boost.org/boost-users/2014/11/83291.php
+#endif                          
+
 #ifdef CGAL_CXX11
 #include <type_traits>
 #include <utility>
@@ -96,6 +103,12 @@ struct Has_type_different_from <T, No, true>
 #endif
 
 	template<class T> struct Scale {
+#ifndef CGAL_CXX11
+		template<class> struct result;
+		template<class FT> struct result<Scale(FT)> {
+			typedef FT type;
+		};
+#endif
 		T const& scale;
 		Scale(T const& t):scale(t){}
 		template<class FT>
@@ -286,5 +299,8 @@ BOOST_PP_REPEAT_FROM_TO(1, 8, CGAL_CODE, _ )
       typedef K Bound_kernel; \
     }
 
+#if defined(BOOST_MSVC)
+#  pragma warning(pop)
+#endif
 
 #endif

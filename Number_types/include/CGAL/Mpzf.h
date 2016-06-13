@@ -54,6 +54,10 @@
 #ifndef mpn_neg
 #define mpn_neg mpn_neg_n
 #endif
+// GMP-4.3.0 is missing mpn_sqr.
+#ifndef mpn_sqr
+#define mpn_sqr(dest,a,n) mpn_mul_n(dest,a,a,n)
+#endif
 // GMP before 5.0 doesn't provide mpn_copyi.
 #ifndef mpn_copyi
 #define mpn_copyi(dst, src, siz) std::copy((src), (src)+(siz), (dst))
@@ -71,6 +75,11 @@
 #include <builtins.h>
 #endif
 
+#include <CGAL/assertions.h>
+#include <boost/config.hpp>
+#include <boost/detail/workaround.hpp>
+#include <boost/version.hpp>
+
 #if defined(BOOST_MSVC)
 #  pragma warning(push)
 #  pragma warning(disable:4146 4244 4267 4800)
@@ -80,11 +89,6 @@
      // int to bool performance
 #endif
 
-#if defined(__GNUC__) && defined(__GNUC_MINOR__) \
-    && (__GNUC__ * 100 + __GNUC_MINOR__) >= 408 \
-    && __cplusplus >= 201103L
-#define CGAL_CAN_USE_CXX11_THREAD_LOCAL
-#endif
 
 /*
 #ifdef CGAL_MPZF_NO_USE_CACHE
@@ -150,7 +154,7 @@ template <class T, class = void> struct pool2 {
   static bool empty() { return data() == 0; }
   static const int extra = 1; // TODO: handle the case where a pointer is larger than a mp_limb_t
   private:
-  BOOST_STATIC_ASSERT(sizeof(T) >= sizeof(T*));
+  CGAL_static_assertion(sizeof(T) >= sizeof(T*));
   static T& data () {
     static CGAL_MPZF_TLS T data_ = 0;
     return data_;
@@ -165,7 +169,7 @@ template <class T, class = void> struct pool3 {
   static bool empty() { return data() == 0; }
   static const int extra = 1; // TODO: handle the case where a pointer is larger than a mp_limb_t
   private:
-  BOOST_STATIC_ASSERT(sizeof(T) >= sizeof(T*));
+  CGAL_static_assertion(sizeof(T) >= sizeof(T*));
   struct cleaner {
     T data_ = 0;
     ~cleaner(){
@@ -414,7 +418,7 @@ struct Mpzf {
     }
     int e1 = (int)dexp+13;
     // FIXME: make it more general! But not slower...
-    BOOST_STATIC_ASSERT(GMP_NUMB_BITS == 64);
+    CGAL_static_assertion(GMP_NUMB_BITS == 64);
     int e2 = e1 % 64;
     exp = e1 / 64 - 17;
     // 52+1023+13==17*64 ?
@@ -455,7 +459,7 @@ struct Mpzf {
     }
 #endif
     if(u.s.sig) size=-size;
-    //assert(to_double()==IA_force_to_double(d));
+    //CGAL_assertion(to_double()==IA_force_to_double(d));
   }
 
 #ifdef CGAL_USE_GMPXX
@@ -855,6 +859,7 @@ struct Mpzf {
   Mpzf& operator+=(Mpzf const&x){ *this=*this+x; return *this; }
   Mpzf& operator-=(Mpzf const&x){ *this=*this-x; return *this; }
   Mpzf& operator*=(Mpzf const&x){ *this=*this*x; return *this; }
+  Mpzf& operator/=(Mpzf const&x){ *this=*this/x; return *this; }
 
   bool is_canonical () const {
     if (size == 0) return true;
@@ -1117,6 +1122,35 @@ CGAL_DEFINE_COERCION_TRAITS_FROM_TO(Gmpz     ,Mpzf)
 CGAL_DEFINE_COERCION_TRAITS_FROM_TO(mpz_class,Mpzf)
 #endif
 
+}
+
+/* There isn't much Eigen can do with such a type,
+ * mostly this is here for IsInteger to protect people.
+ */
+namespace Eigen {
+  template<class> struct NumTraits;
+  template<> struct NumTraits<CGAL::Mpzf>
+  {
+    typedef CGAL::Mpzf Real;
+    /* Should this be Quotient<Mpzf>? Gmpq?  */
+    typedef CGAL::Mpzf NonInteger;
+    typedef CGAL::Mpzf Nested;
+
+    static inline Real epsilon() { return 0; }
+    static inline Real dummy_precision() { return 0; }
+
+    enum {
+      /* Only exact divisions are supported, close enough to an integer.
+       * This way we get compilation failures instead of runtime.  */
+      IsInteger = 1,
+      IsSigned = 1,
+      IsComplex = 0,
+      RequireInitialization = 1,
+      ReadCost = 6,
+      AddCost = 30,
+      MulCost = 50
+    };
+  };
 }
 
 #if defined(BOOST_MSVC)

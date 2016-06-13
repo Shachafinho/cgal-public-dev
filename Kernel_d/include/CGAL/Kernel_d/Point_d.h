@@ -52,6 +52,11 @@ public:
 
   typedef CGAL::Dynamic_dimension_tag Ambient_dimension;
   typedef CGAL::Dimension_tag<0>      Feature_dimension;
+    template < typename Kernel2 >
+	struct WithAnotherKernel
+	{
+	    typedef Point_d<Kernel2>  Type;
+	};
 
   Point_d(int d=0) : Base(d) {}
   Point_d(int d, const Origin &o) : Base(d,o) {}
@@ -88,6 +93,14 @@ public:
   Self& operator-=(const Vector_d<R>& v)
   { return static_cast<Self&>(Base::operator-=(v)); }
   
+  inline bool operator<(const Self& q) const
+  { return R().less_lexicographically_d_object()(*this, q); }
+  inline bool operator>(const Self& q) const
+  { return R().less_lexicographically_d_object()(q, *this); }
+  inline bool operator<=(const Self& q) const
+  { return ! R().less_lexicographically_d_object()(q, *this); }
+  inline bool operator>=(const Self& q) const
+  { return ! R().less_lexicographically_d_object()(*this, q); }
 };
 
 } //namespace CGAL

@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include <QApplication>
 #include <iostream>
+#include <clocale>
 
 int main(int argc, char** argv)
 {
@@ -8,7 +9,7 @@ int main(int argc, char** argv)
 
   application.setOrganizationDomain("geometryfactory.com");
   application.setOrganizationName("GeometryFactory");
-  application.setApplicationName("Surface mesher Qt4 demo");
+  application.setApplicationName("Surface mesher Qt5 demo");
 
   MainWindow w;
 
@@ -16,7 +17,7 @@ int main(int argc, char** argv)
     w.surface_open(argv[1]);
 
   w.show();
-
+  std::setlocale(LC_ALL, "C");
   return application.exec();
   std::cerr << "Exit\n";
 }

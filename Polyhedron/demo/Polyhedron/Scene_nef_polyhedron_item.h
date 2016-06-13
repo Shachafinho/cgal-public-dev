@@ -1,18 +1,17 @@
 #ifndef SCENE_NEF_POLYHEDRON_ITEM_H
 #define SCENE_NEF_POLYHEDRON_ITEM_H
-
+#include  <CGAL/Three/Scene_item.h>
 #include "Scene_nef_polyhedron_item_config.h"
-#include "Scene_item_with_display_list.h"
 #include "Nef_type_fwd.h"
 #include <iostream>
-
+#include <queue>
 class Scene_polyhedron_item;
 
 class SCENE_NEF_POLYHEDRON_ITEM_EXPORT Scene_nef_polyhedron_item
- : public Scene_item_with_display_list 
+ : public CGAL::Three::Scene_item
 {
   Q_OBJECT
-public:  
+public:
   Scene_nef_polyhedron_item();
 //   Scene_nef_polyhedron_item(const Scene_nef_polyhedron_item&);
   Scene_nef_polyhedron_item(const Nef_polyhedron& p);
@@ -27,22 +26,28 @@ public:
   QFont font() const;
   QString toolTip() const;
 
+  virtual void invalidateOpenGLBuffers();
+  virtual void selection_changed(bool);
   // Indicate if rendering mode is supported
   virtual bool supportsRenderingMode(RenderingMode m) const { return m != Gouraud && m!=Splatting; } // CHECK THIS!
   // OpenGL drawing in a display list
   void direct_draw() const;
+
+  virtual void draw(CGAL::Three::Viewer_interface*) const;
+  virtual void drawEdges() const {}
+  virtual void drawEdges(CGAL::Three::Viewer_interface* viewer) const;
+  virtual void drawPoints(CGAL::Three::Viewer_interface*) const;
   // Wireframe OpenGL drawing
-  void draw_edges() const;
 
   bool isFinite() const { return true; }
   bool isEmpty() const;
-  Bbox bbox() const;
+  void compute_bbox() const;
 
   Nef_polyhedron* nef_polyhedron();
   const Nef_polyhedron* nef_polyhedron() const;
 
   bool is_simple() const;
-
+  bool is_Triangle;
   // conversion operations
   static Scene_nef_polyhedron_item* from_polyhedron(Scene_polyhedron_item*);
   Scene_polyhedron_item* convert_to_polyhedron() const;
@@ -64,7 +69,44 @@ public:
   void convex_decomposition(std::list< Scene_polyhedron_item*>&);
   
 private:
+  typedef Scene_item Base;
+  typedef std::vector<QColor> Color_vector;
+
   Nef_polyhedron* nef_poly;
+
+  enum VAOs {
+      Facets = 0,
+      Edges,
+      Points,
+      NbOfVaos = Points +1
+  };
+  enum VBOs {
+      Facets_vertices = 0,
+      Facets_normals,
+      Edges_vertices,
+      Points_vertices,
+      NbOfVbos = Points_vertices +1
+  };
+
+  mutable std::vector<double> positions_lines;
+  mutable std::vector<double> positions_facets;
+  mutable std::vector<double> positions_points;
+  mutable std::vector<double> normals;
+  mutable std::vector<double> color_lines;
+  mutable std::vector<double> color_facets;
+  mutable std::vector<double> color_points;
+  mutable std::size_t nb_points;
+  mutable std::size_t nb_lines;
+  mutable std::size_t nb_facets;
+
+  mutable QOpenGLShaderProgram *program;
+
+  using CGAL::Three::Scene_item::initializeBuffers;
+  void initializeBuffers(CGAL::Three::Viewer_interface *viewer) const;
+  void compute_normals_and_vertices(void) const;
+
+  void triangulate_facet();
+  void triangulate_facet_color();
 }; // end class Scene_nef_polyhedron_item
 
 #endif // SCENE_NEF_POLYHEDRON_ITEM_H

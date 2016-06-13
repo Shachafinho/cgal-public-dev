@@ -323,6 +323,10 @@ Returns the number of <I>i</I>-attributes in the combinatorial map.
 template <unsigned int i>
 size_type number_of_attributes() const;
 
+/*! Returns true if dh points to a used dart (i.e.\ valid).
+ */
+bool is_dart_used(Dart_const_handle dh) const;
+
 /*!
 Returns \f$ \beta_j\f$(\f$ \beta_i\f$(`*dh`)).
 Overloads of this member function are defined that take from one to nine integer as arguments.
@@ -500,6 +504,12 @@ A shorcut for \link CombinatorialMap::dart_of_attribute(typename Attribute_const
 */
 template<unsigned int i>
 Dart_const_handle dart(Dart_const_handle adart) const;
+
+/*! Returns true if ah points to a used i-attribute (i.e.\ valid).
+\pre 0\f$ \leq\f$<I>i</I>\f$ \leq\f$\ref CombinatorialMap::dimension "dimension", and <I>i</I>-attributes are non `void`.
+ */
+template<unsigned int i>
+bool is_attribute_used(typename Attribute_const_handle<i>::type ah) const;
 
 /// @}
 
@@ -690,6 +700,37 @@ void swap(CombinatorialMap& cmap);
 
 /// @}
 
+/// \name Attributes management
+/// @{
+
+/*!
+Returns the status of the management of the attributes of the combinatorial map. <code>true</code> if the high level operations update the non void attributes (default value); <code>false</code> otherwise.
+*/
+bool are_attributes_automatically_managed() const;
+
+/*!
+Set the status of the managment of the attributes of the combinatorial map.
+
+\cgalAdvancedBegin
+After calling `set_automatic_attributes_management(false)`, all high level operations will not update non void attributes, until the call of `set_automatic_attributes_management(true)`. The call of `set_automatic_attributes_management(true)` call the \link CombinatorialMap::correct_invalid_attributes `correct_invalid_attributes()`\endlink function.
+\cgalAdvancedEnd
+
+*/
+void set_automatic_attributes_management(bool update_attributes);
+
+/*!
+Correct the invalid attributes of the combinatorial map.
+We can have invalid attribute either if we have called \link CombinatorialMap::set_automatic_attributes_management `set_automatic_attributes_management(false)`\endlink before to use some modification operations or if we have modified the combinatorial map by using low level operations.
+
+\f$ \forall i \f$, 0 \f$ \leq \f$ i \f$ \leq \f$ \ref CombinatorialMap::dimension "dimension" such that the i-attributes are non void, \f$ \forall \f$ d \f$ \in\f$`darts()`:
+ - if there exists a dart `d2` in the same i-cell than `d` with a different i-attribute, then the i-attribute of `d2` is set to the i-attribute of `d`;
+ - if there exists a dart `d2` in a different i-cell than `d` with the same i-attribute, then the i-attribute of all the darts in i-cell(`d`) is set to a new i-attribute (copy of the original attribute);
+ - ensures that \link CombinatorialMap::dart_of_attribute `dart_of_attribute(d)`\endlink \f$ \in \f$ i-cell(`d`).
+*/
+void correct_invalid_attributes();
+
+/// @}
+
 /// \name Operations
 /// @{
 
@@ -719,7 +760,8 @@ satisfying: <I>f</I>(<I>*dh1</I>)=<I>*dh2</I>, and for all <I>e</I>\f$ \in\f$<I>
 <I>j</I>\f$ \in\f${1,\f$ \ldots\f$,<I>i</I>-2,<I>i</I>+2,\f$ \ldots\f$,<I>d</I>},
 <I>f</I>(\f$ \beta_j\f$(<I>e</I>))=\f$ \beta_j^{-1}\f$(<I>f</I>(<I>e</I>)).
 
-If `update_attributes` is `true`, when necessary, non void
+If \link CombinatorialMap::are_attributes_automatically_managed `are_attributes_automatically_managed()`\endlink`==true`,
+when necessary, non void
 attributes are updated to ensure the validity of the combinatorial map: for each
 <I>j</I>-cells <I>c1</I> and <I>c2</I> which are merged into one <I>j</I>-cell during
 the sew, the two associated attributes <I>attr1</I> and <I>attr2</I> are
@@ -734,20 +776,20 @@ the two attributes <I>attr1</I> and <I>attr2</I>. If set, the dynamic onmerge fu
 \pre \ref CombinatorialMap::is_sewable "is_sewable<i>(dh1,dh2)".
 
 \cgalAdvancedBegin
-If `update_attributes` is `false`, non void attributes are
+If \link CombinatorialMap::are_attributes_automatically_managed `are_attributes_automatically_managed()`\endlink`==false`, non void attributes are
 not updated; thus the combinatorial map can be no more valid after this operation.
 \cgalAdvancedEnd
 
 */
-template <unsigned int i> void sew(Dart_handle dh1,
-Dart_handle dh2, bool update_attributes=true);
+template <unsigned int i> void sew(Dart_handle dh1,Dart_handle dh2);
 
 /*!
   <I>i</I>-unsew darts `*dh` and \f$ \beta_i\f$`(*dh)`, by keeping the combinatorial map valid.
 Unlinks by \f$ \beta_i\f$ all the darts in the
 orbit
 \f$ \langle{}\f$\f$ \beta_1\f$,\f$ \ldots\f$,\f$ \beta_{i-2}\f$,\f$ \beta_{i+2}\f$,\f$ \ldots\f$,\f$ \beta_d\f$\f$ \rangle{}\f$(`*dh`). If
-`update_attributes` is `true`, when necessary, non void
+\link CombinatorialMap::are_attributes_automatically_managed `are_attributes_automatically_managed()`\endlink`==true`,
+when necessary, non void
 attributes are updated to ensure the validity of the combinatorial map: for each
 <I>j</I>-cell <I>c</I> split in two <I>j</I>-cells <I>c1</I> and <I>c2</I> by the
 operation, if <I>c</I> is associated to a <I>j</I>-attribute <I>attr1</I>, then
@@ -760,17 +802,17 @@ two attributes <I>attr1</I> and <I>attr2</I>. If set, the dynamic onsplit functi
      `*dh`\f$ \in\f$`darts()` and `*dh` is not <I>i</I>-free.
 
 \cgalAdvancedBegin
-If `update_attributes` is `false`, non void attributes are
+If \link CombinatorialMap::are_attributes_automatically_managed `are_attributes_automatically_managed()`\endlink`==false`, non void attributes are
 not updated thus the combinatorial map can be no more valid after this operation.
 \cgalAdvancedEnd
 */
-template <unsigned int i> void unsew(Dart_handle dh, bool
-update_attributes=true);
+template <unsigned int i> void unsew(Dart_handle dh);
 
 /*!
 Links `*dh1` and `*dh2` by \f$ \beta_i\f$.
 The combinatorial map can be no more valid after this operation. If
-`update_attributes` is true, non void attributes of `*dh1` and
+\link CombinatorialMap::are_attributes_automatically_managed `are_attributes_automatically_managed()`\endlink`==true`,
+non void attributes of `*dh1` and
 `*dh2` are updated: if one dart has an attribute and the second
 dart not, the non null attribute is associated to the dart having a null attribute.
 If both darts have an attribute,
@@ -778,7 +820,7 @@ the attribute of `*dh1` is associated to `*dh2`.
 \pre 0\f$ \leq\f$<I>i</I>\f$ \leq\f$\ref CombinatorialMap::dimension "dimension",
     `*dh1`\f$ \in\f$`darts()`, `*dh2`\f$ \in\f$`darts()` and (<I>i</I>\f$ <\f$ 2 or `dh1`\f$ \neq\f$`dh2`).
 */
-template <unsigned int i> void link_beta(Dart_handle dh1, Dart_handle dh2, bool update_attributes=true);
+template <unsigned int i> void link_beta(Dart_handle dh1, Dart_handle dh2);
 
 /*!
 Unlinks `*dh` and \f$ \beta_i\f$(`*dh`) by \f$ \beta_i\f$.
@@ -851,33 +893,33 @@ void reverse_orientation_connected_component(Dart_handle adart);
 
 /*!
 Reserves a new mark. Returns its
-index. Returns -1 if there is no more available free mark.
+index. If there is no more available free mark, throw the exception Exception_no_more_available_mark.
 */
-int get_new_mark() const;
+size_type get_new_mark() const;
 
 /*!
 Returns true iff `m` is a reserved mark of the combinatorial map.
 \pre 0\f$ \leq\f$<I>m</I>\f$ <\f$\ref  CombinatorialMap::NB_MARKS "NB_MARKS".
 */
-bool is_reserved(int m) const;
+bool is_reserved(size_type m) const;
 
 /*!
 Returns true iff `*dh` is marked for `m`.
 \pre \ref CombinatorialMap::is_reserved "is_reserved(m)" and `*dh`\f$ \in\f$`darts()`.
 */
-bool is_marked(Dart_const_handle dh, int m) const;
+bool is_marked(Dart_const_handle dh, size_type m) const;
 
 /*!
 Marks `*dh` for `m`.
 \pre \ref CombinatorialMap::is_reserved "is_reserved(m)" and `*dh`\f$ \in\f$`darts()`.
 */
-void mark(Dart_const_handle dh, int m) const;
+void mark(Dart_const_handle dh, size_type m) const;
 
 /*!
 Unmarks `*dh` for the mark `m`.
 \pre \ref CombinatorialMap::is_reserved "is_reserved(m)" and `*dh`\f$ \in\f$`darts()`.
 */
-void unmark(Dart_const_handle dh, int m) const;
+void unmark(Dart_const_handle dh, size_type m) const;
 
 /*!
 Inverse the mark `m` for all the darts of the combinatorial map.
@@ -885,33 +927,248 @@ All the marked darts become unmarked and all the unmarked darts
 become marked.
 \pre \ref CombinatorialMap::is_reserved "is_reserved(m)".
 */
-void negate_mark(int m) const;
+void negate_mark(size_type m) const;
 
 /*!
 Unmarks all the darts of the combinatorial map for `m`.
 \pre \ref CombinatorialMap::is_reserved "is_reserved(m)".
 */
-void unmark_all(int m) const;
+void unmark_all(size_type m) const;
 
 /*!
 Returns the number of marked darts for `m`.
 \pre \ref CombinatorialMap::is_reserved "is_reserved(m)".
 */
-size_type number_of_marked_darts(int m) const;
+size_type number_of_marked_darts(size_type m) const;
 
 /*!
 Return the number of unmarked darts for `m`.
 \pre \ref CombinatorialMap::is_reserved "is_reserved(m)".
 */
-size_type number_of_unmarked_darts(int m) const;
+size_type number_of_unmarked_darts(size_type m) const;
 
 /*!
 Frees mark `m`.
 \pre \ref CombinatorialMap::is_reserved "is_reserved(m)".
 */
-void free_mark(int m) const;
+void free_mark(size_type m) const;
 
 /// @}
+
+/// \name Constructions
+/// @{
+
+/*!
+Creates a combinatorial hexahedron (six combinatorial quadrangles linked together by \f$ \beta_2\f$), and adds it in the combinatorial map. Returns a handle on one dart of this combinatorial hexahedron.
+\pre `dimension` \f$\geq\f$ 2.
+
+\sa `make_edge`
+\sa `make_combinatorial_polygon`
+\sa `make_combinatorial_tetrahedron`
+
+*/
+Dart_handle make_combinatorial_hexahedron();
+
+/*!
+Creates a combinatorial polygon of length `lg` (`lg` darts linked by \f$ \beta_1\f$), and adds it in the combinatorial map. Returns a handle on one dart of this combinatorial polygon.
+\pre `dimension`\f$ \geq\f$ 1 and `lg`\f$ >\f$ 0.
+
+\sa `make_edge`
+\sa `make_combinatorial_tetrahedron`
+\sa `make_combinatorial_hexahedron`
+*/
+Dart_handle make_combinatorial_polygon(unsigned int lg);
+
+/*!
+Creates a combinatorial tetrahedron (four combinatorial triangles linked together by \f$ \beta_2\f$), and adds it in the combinatorial map. Returns a handle on one dart of this combinatorial tetrahedron.
+\pre `dimension`\f$ \geq\f$ 2.
+
+\sa `make_edge`
+\sa `make_combinatorial_polygon`
+\sa `make_combinatorial_hexahedron`
+*/
+Dart_handle make_combinatorial_tetrahedron();
+
+/*!
+Creates an isolated edge (two darts linked by \f$ \beta_2\f$) and adds it in the combinatorial map. Returns a handle on one dart of this edge.
+\pre `dimension`\f$ \geq\f$ 2.
+
+\sa `make_combinatorial_polygon`
+\sa `make_combinatorial_tetrahedron`
+\sa `make_combinatorial_hexahedron`
+*/
+Dart_handle make_edge();
+
+/// @}
+
+/// \name Operations
+/// @{
+
+/*!
+Inserts a 0-cell in the 1-cell containing `dh`. Returns a handle on one dart belonging to the new 0-cell.
+\pre \ref CombinatorialMap::dimension "dimension"\f$ \geq\f$ 1 and
+   `*dh`\f$ \in\f$\ref CombinatorialMap::darts "darts()".
+
+See example in \cgalFigureRef{figinsertvertex}.
+
+If \link CombinatorialMap::are_attributes_automatically_managed `are_attributes_automatically_managed()`\endlink`==true`, if 1-attributes are non `void`, \ref CellAttribute::On_split "Attribute_type<1>::type::On_split"(<I>a</I>,<I>a'</I>) is called, with <I>a</I> the original 1-attribute associated with <I>dh</I> and <I>a'</I> the new 1-attribute created during the operation. If set, the dynamic onsplit function of 1-attributes is also called on <I>a</I> and <I>a'</I>.
+
+\cgalAdvancedBegin
+If \link CombinatorialMap::are_attributes_automatically_managed `are_attributes_automatically_managed()`\endlink`==false`, non void attributes are not updated; thus the combinatorial map can be no more valid after this operation.
+\cgalAdvancedEnd
+
+\sa `insert_cell_0_in_cell_2`
+\sa `insert_cell_1_in_cell_2`
+\sa `insert_dangling_cell_1_in_cell_2`
+\sa `insert_cell_2_in_cell_3<InputIterator>`
+\sa `remove_cell<i>`
+*/
+Dart_handle insert_cell_0_in_cell_1(Dart_handle dh);
+
+/*!
+Inserts a 0-cell in the 2-cell containing `dh`. The 2-cell is split in triangles, one for each initial edge of the facet. Returns a handle on one dart belonging to the new 0-cell.
+\pre \ref CombinatorialMap::dimension "dimension"\f$ \geq\f$ 2 and `*dh`\f$ \in\f$\ref CombinatorialMap::darts "darts()".
+
+See example in \cgalFigureRef{figtriangulate}.
+
+If \link CombinatorialMap::are_attributes_automatically_managed `are_attributes_automatically_managed()`\endlink`==true`, if 2-attributes are non `void`, \ref CellAttribute::On_split "Attribute_type<2>::type::On_split"(<I>a</I>,<I>a'</I>) is called, with <I>a</I> the original 2-attribute associated with `dh` and <I>a'</I> each new 2-attribute created during the operation. If set, the dynamic onsplit function of 2-attributes is also called on <I>a</I> and <I>a'</I>.
+
+\cgalAdvancedBegin
+If \link CombinatorialMap::are_attributes_automatically_managed `are_attributes_automatically_managed()`\endlink`==false`, non void attributes are not updated; thus the combinatorial map can be no more valid after this operation.
+\cgalAdvancedEnd
+
+\sa `insert_cell_0_in_cell_2`
+\sa `insert_cell_1_in_cell_2`
+\sa `insert_dangling_cell_1_in_cell_2`
+\sa `insert_cell_2_in_cell_3<InputIterator>`
+\sa `remove_cell<i>`
+*/
+Dart_handle insert_cell_0_in_cell_2(Dart_handle dh); 
+
+/*!
+Inserts a 1-cell in the 2-cell containing `dh1` and `dh2`. Returns \f$ \beta_0\f$(`dh1`), a handle on one dart belonging to the new 1-cell.
+\pre `is_insertable_cell_1_in_cell_2(dh1,dh2)`.
+
+See example in \cgalFigureRef{figinsertedge}.
+
+If \link CombinatorialMap::are_attributes_automatically_managed `are_attributes_automatically_managed()`\endlink`==true`, if 2-attributes are non `void`, \ref CellAttribute::On_split "Attribute_type<2>::type::On_split"(<I>a</I>,<I>a'</I>) is called, with <I>a</I> the original 2-attribute associated with `dh` and <I>a'</I> the new 2-attribute created during the operation. If set, the dynamic onsplit function of 2-attributes is also called on <I>a</I> and <I>a'</I>.
+
+\cgalAdvancedBegin
+If \link CombinatorialMap::are_attributes_automatically_managed `are_attributes_automatically_managed()`\endlink`==false`, non void attributes are not updated; thus the combinatorial map can be no more valid after this operation.
+\cgalAdvancedEnd
+
+\sa `is_insertable_cell_1_in_cell_2`
+\sa `insert_cell_0_in_cell_1`
+\sa `insert_cell_0_in_cell_2`
+\sa `insert_dangling_cell_1_in_cell_2`
+\sa `insert_cell_2_in_cell_3<InputIterator>`
+\sa `remove_cell<i>`
+*/
+Dart_handle insert_cell_1_in_cell_2(Dart_handle dh1, Dart_handle dh2);
+
+/*!
+Inserts a 2-cell along the path of 1-cells containing darts given by the range `[afirst,alast)`. Returns a handle on one dart belonging to the new 2-cell.
+\pre `is_insertable_cell_2_in_cell_3(afirst,alast)`.
+
+See example in \cgalFigureRef{figinsertface}.
+
+If \link CombinatorialMap::are_attributes_automatically_managed `are_attributes_automatically_managed()`\endlink`==true`, if 3-attributes are non `void`, \ref CellAttribute::On_split "Attribute_type<3>::type::On_split"(<I>a</I>,<I>a'</I>) is called, with <I>a</I> the original 3-attribute associated with `dh` and <I>a'</I> the new 3-attribute created during the operation. If set, the dynamic onsplit function of 3-attributes is also called on <I>a</I> and <I>a'</I>.
+
+\cgalAdvancedBegin
+If \link CombinatorialMap::are_attributes_automatically_managed `are_attributes_automatically_managed()`\endlink`==false`, non void attributes are not updated; thus the combinatorial map can be no more valid after this operation.
+\cgalAdvancedEnd
+
+\sa `is_insertable_cell_2_in_cell_3<InputIterator>`
+\sa `insert_cell_0_in_cell_1`
+\sa `insert_cell_0_in_cell_2`
+\sa `insert_cell_1_in_cell_2`
+\sa `insert_dangling_cell_1_in_cell_2`
+\sa `remove_cell<i>`
+*/
+template <class InputIterator>
+Dart_handle insert_cell_2_in_cell_3(InputIterator afirst, InputIterator alast);  
+
+/*!
+Inserts a 1-cell in a the 2-cell containing `dh`, the 1-cell being attached only by one of its extremity to the 0-cell containing `dh`. Returns a handle on the dart belonging to the new 1-cell and to the new 0-cell.
+\pre \ref CombinatorialMap::dimension "dimension"\f$ \geq\f$ 2 and `*dh`\f$ \in\f$\ref CombinatorialMap::darts "darts()".
+
+See example in \cgalFigureRef{figinsertedge}.
+
+\cgalAdvancedBegin
+If \link CombinatorialMap::are_attributes_automatically_managed `are_attributes_automatically_managed()`\endlink`==false`, non void attributes are not updated; thus the combinatorial map can be no more valid after this operation.
+\cgalAdvancedEnd
+
+\sa `insert_cell_0_in_cell_1`
+\sa `insert_cell_0_in_cell_2`
+\sa `insert_cell_1_in_cell_2`
+\sa `insert_cell_2_in_cell_3<InputIterator>`
+\sa `remove_cell<i>`
+
+*/
+Dart_handle insert_dangling_cell_1_in_cell_2(Dart_handle dh);
+
+/*!
+Returns true iff it is possible to insert a 1-cell in the combinatorial map between `dh1` and `dh2`.
+
+This is possible if `dh1`\f$ \neq\f$`dh2` and `dh1`\f$ \in\f$\f$ \langle{}\f$\f$ \beta_1\f$\f$ \rangle{}\f$(`dh2`).
+\pre \ref CombinatorialMap::dimension "dimension"\f$ \geq\f$ 2, `*dh1`\f$ \in\f$\ref CombinatorialMap::darts "darts()", and `*dh2`\f$ \in\f$\ref CombinatorialMap::darts "darts()".
+
+\sa `insert_cell_1_in_cell_2`
+\sa `is_insertable_cell_2_in_cell_3<InputIterator>`
+
+*/
+bool is_insertable_cell_1_in_cell_2(Dart_const_handle dh1, Dart_const_handle dh2);
+
+/*!
+Returns true iff it is possible to insert a 2-cell in the combinatorial map along the path of darts given by the range `[afirst,alast)`. The 2-cell can be inserted iff each couple of consecutive darts of the path <I>a1</I> and <I>a2</I> belong to the same vertex and the same volume, and if the path is closed.
+\pre \ref CombinatorialMap::dimension "dimension"\f$ \geq\f$ 3.
+
+\sa `insert_cell_2_in_cell_3<InputIterator>`
+\sa `is_insertable_cell_1_in_cell_2`
+
+*/
+template <class InputIterator>
+bool is_insertable_cell_2_in_cell_3(InputIterator afirst, InputIterator alast);
+
+/*!
+Returns true iff the <I>i</I>-cell containing `dh` can be removed.
+
+An <I>i</I>-cell can be removed if `i`==\ref CombinatorialMap::dimension "dimension" or if `i`==\ref CombinatorialMap::dimension "dimension"-1 or if `i`\f$ <\f$\ref CombinatorialMap::dimension "dimension"-1 and the <I>i</I>-cell containing `dh` is incident to at most two (<I>i+1</I>)-cells.
+\pre 0\f$ \leq\f$`i`\f$ \leq\f$\ref CombinatorialMap::dimension "dimension" and `*dh`\f$ \in\f$\ref CombinatorialMap::darts "darts()".
+
+\sa `remove_cell<i>`
+*/
+template <unsigned int i>
+bool is_removable(Dart_const_handle dh);
+
+/*!
+Removes the <I>i</I>-cell containing `dh`. Returns the number of darts removed from the combinatorial map.
+\pre `is_removable<i>(dh)`.
+
+See examples in \cgalFigureRef{figinsertvertex}, \cgalFigureRef{figinsertedge} and \cgalFigureRef{figinsertface}.
+
+If \link CombinatorialMap::are_attributes_automatically_managed `are_attributes_automatically_managed()`\endlink`==true`, if `i`\f$ <\f$\ref CombinatorialMap::dimension "dimension", and <I>i+1</I>-attributes are non `void`, and if there are two distinct (<I>i+1</I>)-cells around dart `dh`, \ref CellAttribute::On_merge "Attribute_type<i+1>::type::On_merge"(<I>a1</I>,<I>a2</I>) is called, with <I>a1</I> the (<I>i+1</I>)-attribute associated to `dh`, and <I>a2</I> the (<I>i+1</I>)-attribute associated to \f$ \beta_{i+1}\f$(<I>dh</I>). If set, the dynamic onmerge function of <I>i+1</I>-attributes is also called on <I>a1</I> and <I>a2</I>.
+
+If \link CombinatorialMap::are_attributes_automatically_managed `are_attributes_automatically_managed()`\endlink`==true`, if a <I>j</I>-cell is disconnected in two <I>j</I>-cells during the operation, and if <I>j</I>-attributes are non void, \ref CellAttribute::On_split "Attribute_type<j>::type::On_split"(<I>a</I>,<I>a'</I>) is called with <I>a</I> the original <I>j</I>-attribute and <I>a'</I> the new <I>j</I>-attribute created due to the disconnection. If set, the dynamic onsplit function of <i>j</i>-attributes is also called on <I>a</I> and <I>a'</I>.
+
+\cgalAdvancedBegin
+If \link CombinatorialMap::are_attributes_automatically_managed `are_attributes_automatically_managed()`\endlink`==false`, non void attributes are not updated; thus the combinatorial map can be no more valid after this operation.
+\cgalAdvancedEnd
+
+\sa `is_removable<i>`
+\sa `insert_cell_0_in_cell_1`
+\sa `insert_cell_0_in_cell_2`
+\sa `insert_cell_1_in_cell_2`
+\sa `insert_dangling_cell_1_in_cell_2`
+\sa `insert_cell_2_in_cell_3<InputIterator>`
+*/
+template <unsigned int i>
+size_type remove_cell(Dart_handle dh);
+  
+} /* namespace CGAL */
+
+/// @}
+  
 }; /* end CombinatorialMap */
 //@}
 

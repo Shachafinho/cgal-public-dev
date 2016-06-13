@@ -4,14 +4,12 @@
 
 project( Convex_hull_3_Demo )
 
-cmake_minimum_required(VERSION 2.6.2)
-if("${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION}" VERSION_GREATER 2.8.3)
-  cmake_policy(VERSION 2.8.4)
-else()
-  cmake_policy(VERSION 2.6)
+cmake_minimum_required(VERSION 2.8.11)
+if(POLICY CMP0043)
+  cmake_policy(SET CMP0043 OLD)
 endif()
 
-find_package(CGAL QUIET COMPONENTS Core )
+find_package(CGAL QUIET)
 
 if ( CGAL_FOUND )
 
@@ -19,7 +17,6 @@ if ( CGAL_FOUND )
 
   include( CGAL_CreateSingleSourceCGALProgram )
 
-  create_single_source_cgal_program( "incremental_hull_3_demo.cpp" )
   create_single_source_cgal_program( "quickhull_3_demo.cpp" )
 
 else()

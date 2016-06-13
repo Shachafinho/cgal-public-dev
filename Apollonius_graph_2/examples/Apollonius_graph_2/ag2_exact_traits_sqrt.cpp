@@ -5,13 +5,18 @@
 #include <fstream>
 #include <cassert>
 
-
 #if defined CGAL_USE_LEDA
 #  include <CGAL/leda_real.h>
 #elif defined CGAL_USE_CORE
 #  include <CGAL/CORE_Expr.h>
 #endif
 
+// *** WARNING ***
+// The use of a kernel based on an exact number type is highly inefficient.
+// It is used in this example primarily for illustration purposes.
+// In an efficiency critical context, and/or for the purposes of
+// benchmarking the Apollonius_graph_filtered_traits_2<> class should
+// be used.
 
 #if defined CGAL_USE_LEDA
 // If LEDA is present use leda_real as the exact number type

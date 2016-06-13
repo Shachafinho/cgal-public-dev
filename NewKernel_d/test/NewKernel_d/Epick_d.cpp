@@ -1,3 +1,13 @@
+#if defined(__GNUC__) && defined(__GNUC_MINOR__) && (__GNUC__ <= 4) && (__GNUC_MINOR__ < 4)
+
+#include <iostream>
+int main()
+{
+  std::cerr << "NOTICE: This test requires G++ >= 4.4, and will not be compiled." << std::endl;
+}
+
+#else
+
 //#define BOOST_RESULT_OF_USE_DECLTYPE 1
 #include <CGAL/Epick_d.h>
 #include <typeinfo>
@@ -12,6 +22,7 @@
 #include <CGAL/Interval_nt.h>
 #include <CGAL/use.h>
 #include <iostream>
+#include <sstream>
 
 //typedef CGAL::Cartesian_base_d<double,CGAL::Dimension_tag<2> > K0;
 //typedef CGAL::Cartesian_base_d<CGAL::Interval_nt_advanced,CGAL::Dimension_tag<2> > KA;
@@ -80,6 +91,7 @@ void test2(){
   typedef typename K1::Construct_sphere_d CSp;
   typedef typename CGAL::Get_functor<K1, CGAL::Segment_extremity_tag>::type CSE;
   typedef typename K1::Construct_cartesian_const_iterator_d CCI;
+  typedef typename K1::Construct_circumcenter_d CCc;
   typedef typename K1::Linear_base_d LB;
   typedef typename K1::Orientation_d PO;
   typedef typename K1::Side_of_oriented_sphere_d SOS;
@@ -115,6 +127,13 @@ void test2(){
   typedef typename K1::Position_on_line_d PoL;
   typedef typename K1::Equal_d E;
   typedef typename K1::Squared_distance_d SD;
+  typedef typename K1::Squared_length_d SL;
+  typedef typename K1::Scalar_product_d SP;
+  typedef typename K1::Difference_of_vectors_d DV;
+  typedef typename K1::Difference_of_points_d DP;
+  typedef typename K1::Construct_min_vertex_d CmV;
+  typedef typename K1::Construct_max_vertex_d CMV;
+  typedef typename K1::Compute_squared_radius_d SR;
 
   CGAL_USE_TYPE(AT);
   CGAL_USE_TYPE(D);
@@ -131,6 +150,7 @@ void test2(){
   CV cv Kinit(construct_vector_d_object);
   CCI ci Kinit(construct_cartesian_const_iterator_d_object);
   CC cc Kinit(compute_coordinate_d_object);
+  CCc ccc Kinit(construct_circumcenter_d_object);
   PO po Kinit(orientation_d_object);
   CS cs Kinit(construct_segment_d_object);
   CSp csp Kinit(construct_sphere_d_object);
@@ -168,6 +188,13 @@ void test2(){
   PoL pol Kinit(position_on_line_d_object);
   E ed Kinit(equal_d_object);
   SD sd Kinit(squared_distance_d_object);
+  SL sl Kinit(squared_length_d_object);
+  SP spr Kinit(scalar_product_d_object);
+  DV dv Kinit(difference_of_vectors_d_object);
+  DP dp Kinit(difference_of_points_d_object);
+  CmV cmv Kinit(construct_min_vertex_d_object);
+  CMV cMv Kinit(construct_max_vertex_d_object);
+  SR sr Kinit(compute_squared_radius_d_object);
 
   CGAL_USE(bc);
   CGAL_USE(pol);
@@ -175,7 +202,6 @@ void test2(){
   CGAL_USE(cd);
   CGAL_USE(cli);
   CGAL_USE(cr);
-  CGAL_USE(cib);
   P a=cp(3,4);
   assert(pd(a)==2);
   assert(pv(a)[1]==4);
@@ -217,6 +243,12 @@ void test2(){
   assert(sos(tabn+0,tabn+3,P(3,3))==CGAL::ON_POSITIVE_SIDE);
   assert(sbs(tabp+0,tabp+3,P(3,3))==CGAL::ON_UNBOUNDED_SIDE);
   assert(sbs(tabn+0,tabn+3,P(3,3))==CGAL::ON_UNBOUNDED_SIDE);
+  assert(sbs(tabp+1,tabp+3,P(1,1))==CGAL::ON_BOUNDARY);
+  assert(ccc(tabp+1,tabp+2)==tabp[1]);
+  assert(ccc(tabn+0,tabn+2)==P(0,.5));
+  assert(sr(tabp+2,tabp+3)==0);
+  assert(sr(tabp+1,tabp+3)==.5);
+  assert(sbs(tabp+1,tabp+3,P(10,-1))==CGAL::ON_UNBOUNDED_SIDE);
   assert(sos(tabp+0,tabp+3,P(.5,.5))==CGAL::ON_POSITIVE_SIDE);
   assert(sos(tabn+0,tabn+3,P(.5,.5))==CGAL::ON_NEGATIVE_SIDE);
   assert(sbs(tabp+0,tabp+3,P(.5,.5))==CGAL::ON_BOUNDED_SIDE);
@@ -227,18 +259,23 @@ void test2(){
   P x4=cp(0,0);
   P x5=cp(0,-1);
   P tab2[]={x1,x2,x3,x4};
+  assert(dp(x1,x2)[1]==2);
   assert(po(tab2+0,tab2+3)==CGAL::COUNTERCLOCKWISE);
   assert(sos(tab2+0,tab2+3,x4)==CGAL::ON_POSITIVE_SIDE);
   assert(sbs(tab2+0,tab2+3,x4)==CGAL::ON_BOUNDED_SIDE);
   V y1=cv(1,-1);
+  assert(y1.squared_length()==2);
+  assert(sl(y1)==2);
   V y2=cv(3,-3);
+  assert(spr(y1,y2)==6);
+  assert(dv(y2,y1)[0]==2);
   V tab3[]={y1,y2};
   std::vector<V> v;
   std::back_insert_iterator<std::vector<V> > bii(v);
   lb(tab3+0,tab3+2,bii);
   assert(v.size()==1);
   assert(lr(tab3+0,tab3+2)==1);
-  H h=ch(tab2+1,tab2+3);
+  H h=ch(tab2+1,tab2+3,tab2[0]);
   assert(fabs(va(h,x2)-1)<.0001);
   assert(fabs(va(h,x3)-1)<.0001);
   assert(fabs(va(h,x1)+1)<.0001);
@@ -247,6 +284,10 @@ void test2(){
   assert(os(h2,x1)==CGAL::ON_POSITIVE_SIDE);
   H h3=ch(tab2+1,tab2+3,x1,CGAL::ON_NEGATIVE_SIDE);
   assert(!hops(h3,x1));
+  P tab4[]={cp(-1,1),cp(1,-1),cp(-1,-1)};
+  H h4=ch(tab4+0,tab4+2,tab4[2],CGAL::ON_POSITIVE_SIDE);
+  assert(hops(h4,tab4[2]));
+  assert(os(h4,tab4[1])==CGAL::ON_ORIENTED_BOUNDARY);
   V hv=ov(h); CGAL_USE(hv);
 #if 1
   // Doesn't compile with Lazy yet.
@@ -312,6 +353,17 @@ void test2(){
   assert(fabs(sd(cent0,psp0)-25)<.0001);
   assert(fabs(sd(cent0,psp1)-25)<.0001);
   assert(fabs(sd(cent0,psp2)-25)<.0001);
+
+  P tl=cp(2,5);
+  P br=cp(4,-1);
+  IB ib=cib(tl,br);
+  P bl=cmv(ib);
+  P tr=cMv(ib);
+  assert(cc(bl,0)==2);
+  assert(cc(bl,1)==-1);
+  assert(cc(tr,0)==4);
+  assert(cc(tr,1)==5);
+
   Sp un1; CGAL_USE(un1);
   H un2; CGAL_USE(un2);
   S un3; CGAL_USE(un3);
@@ -372,6 +424,8 @@ void test3(){
   typedef typename K1::Squared_distance_d SD;
   typedef typename K1::Point_dimension_d PD;
   typedef typename K1::Affinely_independent_d AI;
+  typedef typename K1::Scaled_vector_d SV;
+  typedef typename K1::Side_of_bounded_sphere_d SBDS;
 
   Ker k
 #if 1
@@ -388,6 +442,7 @@ void test3(){
   PO po Kinit(orientation_d_object);
   CS cs Kinit(construct_segment_d_object);
   CSE cse (k);
+  SV sv Kinit(scaled_vector_d_object);
   LI li Kinit(linearly_independent_d_object);
   SOS sos Kinit(side_of_oriented_sphere_d_object);
   SBS sbs Kinit(side_of_bounded_sphere_d_object);
@@ -402,6 +457,7 @@ void test3(){
   SD sd Kinit(squared_distance_d_object);
   PD pd Kinit(point_dimension_d_object);
   AI ai Kinit(affinely_independent_d_object);
+  SBDS sbds Kinit(side_of_bounded_sphere_d_object);
   P a; // Triangulation needs this :-(
   a=cp(2,3,4);
   assert(pd(a)==3);
@@ -429,7 +485,7 @@ void test3(){
   P tab[]={a,b,c,d,e};
   std::cout << po (&tab[0],tab+4) << ' ';
   std::cout << sos(&tab[0],tab+5) << ' ';
-  std::cout << sbs(&tab[0],tab+5) << std::endl;
+  std::cout << sbs(tab+1,tab+5,tab[0]) << std::endl;
   FO fo=cfo(&tab[0],tab+3);
   std::cout << fo;
   P x[]={cp(2,2,3),cp(2,2,0),cp(1,2,1)};
@@ -447,6 +503,7 @@ void test3(){
   assert(!cah(y+0,y+2,y[2]));
   assert( ai(y+0,y+3));
   assert(!ai(y+0,y+4));
+  assert(sv(yv[0],3)[1]==6);
   FO fo3=cfo(&y[0],y+3);
   assert(fo3.rest.size()==1 && fo3.rest[0]!=3);
   std::cout << fo3;
@@ -524,6 +581,16 @@ void test3(){
   assert(ifsos(fozn, tz+0, tz+3, tz[4]) == CGAL::ON_NEGATIVE_SIDE);
   assert(ifsos(fozp, tz+0, tz+3, tz[5]) == CGAL::ON_NEGATIVE_SIDE);
   assert(ifsos(fozn, tz+0, tz+3, tz[5]) == CGAL::ON_POSITIVE_SIDE);
+  P showit=cp(1,2,4);
+  std::ostringstream output;
+  output << showit;
+  assert(output.str()=="3 1 2 4");
+  P t1[]={cp(1,2,3),cp(3,2,1),cp(2,4,2)};
+  assert(sbds(t1+0,t1+2,cp(2,2,3.414)) == CGAL::ON_BOUNDED_SIDE);
+  assert(sbds(t1+0,t1+2,cp(1,2,3)) == CGAL::ON_BOUNDARY);
+  assert(sbds(t1+0,t1+2,cp(2,2,3.415)) == CGAL::ON_UNBOUNDED_SIDE);
+  assert(sbds(t1+0,t1+3,cp(2.1,3.5,1.9)) == CGAL::ON_BOUNDED_SIDE);
+  assert(sbds(t1+0,t1+3,cp(10,10,10)) == CGAL::ON_UNBOUNDED_SIDE);
 }
 template struct CGAL::Epick_d<CGAL::Dimension_tag<2> >;
 template struct CGAL::Epick_d<CGAL::Dimension_tag<3> >;
@@ -543,3 +610,5 @@ int main(){
   test3<Ker3>();
   test3<Kerd>();
 }
+
+#endif

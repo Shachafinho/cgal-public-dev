@@ -16,17 +16,25 @@ typedef Kernel::Vector_3 Vector;
 // Point with normal vector stored in a std::pair.
 typedef std::pair<Point, Vector> PointVectorPair;
 
-int main(void)
+// Concurrency
+#ifdef CGAL_LINKED_WITH_TBB
+typedef CGAL::Parallel_tag Concurrency_tag;
+#else
+typedef CGAL::Sequential_tag Concurrency_tag;
+#endif
+
+int main(int argc, char*argv[])
 {
+  const char* fname = (argc>1)?argv[1]:"data/sphere_1k.xyz";
     // Reads a .xyz point set file in points[].
     std::list<PointVectorPair> points;
-    std::ifstream stream("data/sphere_20k.xyz");
+    std::ifstream stream(fname);
     if (!stream ||
         !CGAL::read_xyz_points(stream,
                                std::back_inserter(points),
                                CGAL::First_of_pair_property_map<PointVectorPair>()))
     {
-        std::cerr << "Error: cannot read file data/sphere_20k.xyz" << std::endl;
+      std::cerr << "Error: cannot read file " << fname<< std::endl;
         return EXIT_FAILURE;
     }
 
@@ -34,7 +42,7 @@ int main(void)
     // Note: pca_estimate_normals() requires an iterator over points
     // as well as property maps to access each point's position and normal.
     const int nb_neighbors = 18; // K-nearest neighbors = 3 rings
-    CGAL::pca_estimate_normals(points.begin(), points.end(),
+    CGAL::pca_estimate_normals<Concurrency_tag>(points.begin(), points.end(),
                                CGAL::First_of_pair_property_map<PointVectorPair>(),
                                CGAL::Second_of_pair_property_map<PointVectorPair>(),
                                nb_neighbors);
@@ -43,7 +51,7 @@ int main(void)
     // Note: mst_orient_normals() requires an iterator over points
     // as well as property maps to access each point's position and normal.
     std::list<PointVectorPair>::iterator unoriented_points_begin =
-        CGAL::mst_orient_normals(points.begin(), points.end(),
+      CGAL::mst_orient_normals(points.begin(), points.end(),
                                  CGAL::First_of_pair_property_map<PointVectorPair>(),
                                  CGAL::Second_of_pair_property_map<PointVectorPair>(),
                                  nb_neighbors);

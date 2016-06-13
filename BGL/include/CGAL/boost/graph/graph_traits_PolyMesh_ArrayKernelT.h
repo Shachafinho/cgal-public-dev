@@ -20,6 +20,9 @@
 #ifndef CGAL_BOOST_GRAPH_GRAPH_TRAITS_POLYMESH_ARRAYKERNELT_H
 #define CGAL_BOOST_GRAPH_GRAPH_TRAITS_POLYMESH_ARRAYKERNELT_H
 
+// include this to avoid a VC15 warning
+#include <CGAL/boost/graph/named_function_params.h>
+
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/properties.hpp>
 
@@ -28,8 +31,13 @@
 #include <CGAL/boost/graph/properties_PolyMesh_ArrayKernelT.h>
 #include <CGAL/boost/graph/internal/OM_iterator_from_circulator.h>
 #include <CGAL/boost/graph/iterator.h>
+#include <CGAL/Iterator_range.h>
+#include <CGAL/boost/graph/helpers.h>
+#include <CGAL/assertions.h>
 
 #include <OpenMesh/Core/Mesh/PolyMesh_ArrayKernelT.hh>
+
+#include <CGAL/hash_openmesh.h>
 
 // http://openmesh.org/Documentation/OpenMesh-Doc-Latest/classOpenMesh_1_1Concepts_1_1KernelT.html
 
@@ -59,6 +67,11 @@ public:
     }
   }
 
+  bool operator<(const OMesh_edge& other) const
+  { 
+    return this->idx() < other.idx();
+  }
+
   bool
   operator!=(const OMesh_edge& other) { return !(*this == other); }
 
@@ -68,7 +81,7 @@ public:
   OMesh_edge
   opposite_edge() const { return OMesh_edge(Halfedge_handle((halfedge_.idx() & 1) ? halfedge_.idx()-1 : halfedge_.idx()+1)); }
 
-  std::size_t idx() const { return halfedge_.idx() / 2; }
+  unsigned int idx() const { return halfedge_.idx() / 2; }
 private:
   Halfedge_handle halfedge_;
 };
@@ -248,45 +261,42 @@ target(typename boost::graph_traits<OpenMesh::PolyMesh_ArrayKernelT<K> >::halfed
 }
     
 template <typename K>
-std::pair<typename boost::graph_traits<OpenMesh::PolyMesh_ArrayKernelT<K> >::vertex_iterator,
-          typename boost::graph_traits<OpenMesh::PolyMesh_ArrayKernelT<K> >::vertex_iterator>
+CGAL::Iterator_range<typename boost::graph_traits<OpenMesh::PolyMesh_ArrayKernelT<K> >::vertex_iterator>
 vertices(const OpenMesh::PolyMesh_ArrayKernelT<K>& sm)
 {
-  return std::make_pair(sm.vertices_sbegin(), sm.vertices_end()); 
+  return CGAL::make_range(sm.vertices_sbegin(), sm.vertices_end()); 
 }
 
  
 template <typename K>
-std::pair<typename boost::graph_traits<OpenMesh::PolyMesh_ArrayKernelT<K> >::edge_iterator,
-          typename boost::graph_traits<OpenMesh::PolyMesh_ArrayKernelT<K> >::edge_iterator>
+CGAL::Iterator_range<typename boost::graph_traits<OpenMesh::PolyMesh_ArrayKernelT<K> >::edge_iterator>
 edges(const OpenMesh::PolyMesh_ArrayKernelT<K>& sm)
 {
   typedef typename boost::graph_traits<OpenMesh::PolyMesh_ArrayKernelT<K> >::edge_iterator iterator;
   iterator beg(sm.edges_sbegin());
   iterator end(sm.edges_end());
-  return std::make_pair(beg,end); 
+  return CGAL::make_range(beg,end); 
 }
 
   
 template <typename K>
-std::pair<typename boost::graph_traits<OpenMesh::PolyMesh_ArrayKernelT<K> >::in_edge_iterator,
-          typename boost::graph_traits<OpenMesh::PolyMesh_ArrayKernelT<K> >::in_edge_iterator>
+CGAL::Iterator_range<typename boost::graph_traits<OpenMesh::PolyMesh_ArrayKernelT<K> >::in_edge_iterator>
 in_edges(typename boost::graph_traits<OpenMesh::PolyMesh_ArrayKernelT<K> >::vertex_descriptor v,
          const OpenMesh::PolyMesh_ArrayKernelT<K>& sm)
 {
   typedef typename boost::graph_traits<OpenMesh::PolyMesh_ArrayKernelT<K> >::in_edge_iterator Iter;
 
-  return std::make_pair(Iter(halfedge(v,sm),sm), Iter(halfedge(v,sm),sm,1));
+  return CGAL::make_range(Iter(halfedge(v,sm),sm), Iter(halfedge(v,sm),sm,1));
 }
 
+
 template <typename K>
-std::pair<typename boost::graph_traits<OpenMesh::PolyMesh_ArrayKernelT<K> >::out_edge_iterator,
-          typename boost::graph_traits<OpenMesh::PolyMesh_ArrayKernelT<K> >::out_edge_iterator>
+CGAL::Iterator_range<typename boost::graph_traits<OpenMesh::PolyMesh_ArrayKernelT<K> >::out_edge_iterator>
 out_edges(typename boost::graph_traits<OpenMesh::PolyMesh_ArrayKernelT<K> >::vertex_descriptor v,
           const OpenMesh::PolyMesh_ArrayKernelT<K>& sm)
 {
   typedef typename boost::graph_traits<OpenMesh::PolyMesh_ArrayKernelT<K> >::out_edge_iterator Iter;
-  return std::make_pair(Iter(halfedge(v,sm),sm), Iter(halfedge(v,sm),sm,1));
+  return CGAL::make_range(Iter(halfedge(v,sm),sm), Iter(halfedge(v,sm),sm,1));
 }
 
 
@@ -350,8 +360,12 @@ typename boost::graph_traits<OpenMesh::PolyMesh_ArrayKernelT<K> >::halfedge_desc
 halfedge(typename boost::graph_traits<OpenMesh::PolyMesh_ArrayKernelT<K> >::vertex_descriptor v,
          const OpenMesh::PolyMesh_ArrayKernelT<K>& sm)
 {
+  if(sm.halfedge_handle(v) == boost::graph_traits<OpenMesh::PolyMesh_ArrayKernelT<K> >::null_halfedge()){
+    return boost::graph_traits<OpenMesh::PolyMesh_ArrayKernelT<K> >::null_halfedge();
+  }
   // prev because OpenMesh stores out-going halfedges
-  return sm.prev_halfedge_handle(sm.halfedge_handle(v));
+  // return sm.prev_halfedge_handle(sm.halfedge_handle(v));
+  return sm.opposite_halfedge_handle(sm.halfedge_handle(v));
 }
 
 
@@ -374,11 +388,10 @@ halfedge(typename boost::graph_traits<OpenMesh::PolyMesh_ArrayKernelT<K> >::vert
 // HalfedgeListGraph
 //
 template <typename K>
-std::pair<typename boost::graph_traits<OpenMesh::PolyMesh_ArrayKernelT<K> >::halfedge_iterator,
-          typename boost::graph_traits<OpenMesh::PolyMesh_ArrayKernelT<K> >::halfedge_iterator>
+CGAL::Iterator_range<typename boost::graph_traits<OpenMesh::PolyMesh_ArrayKernelT<K> >::halfedge_iterator>
 halfedges(const OpenMesh::PolyMesh_ArrayKernelT<K>& sm)
 {
-  return std::make_pair(sm.halfedges_sbegin(), sm.halfedges_end());
+  return CGAL::make_range(sm.halfedges_sbegin(), sm.halfedges_end());
 }
 
 template <typename K>
@@ -503,11 +516,10 @@ num_faces(const OpenMesh::PolyMesh_ArrayKernelT<K>& sm)
 }
   
 template <typename K>
-std::pair<typename boost::graph_traits<OpenMesh::PolyMesh_ArrayKernelT<K> >::face_iterator,
-          typename boost::graph_traits<OpenMesh::PolyMesh_ArrayKernelT<K> >::face_iterator>
+CGAL::Iterator_range<typename boost::graph_traits<OpenMesh::PolyMesh_ArrayKernelT<K> >::face_iterator>
 faces(const OpenMesh::PolyMesh_ArrayKernelT<K>& sm)
 {
-  return std::make_pair(sm.faces_sbegin(), sm.faces_end()); 
+  return CGAL::make_range(sm.faces_sbegin(), sm.faces_end()); 
 }
  
 
@@ -537,7 +549,7 @@ template <typename K>
 void
 clear_vertex(typename boost::graph_traits<OpenMesh::PolyMesh_ArrayKernelT<K> >::vertex_descriptor, 
              OpenMesh::PolyMesh_ArrayKernelT<K>&) {
-  assert(false);
+  CGAL_assert(false);
 }
 
   */
@@ -603,12 +615,12 @@ remove_face(typename boost::graph_traits<OpenMesh::PolyMesh_ArrayKernelT<K> >::f
   sm.request_face_status();
   sm.request_vertex_status();
   sm.request_halfedge_status();
-  set_halfedge(f, typename boost::graph_traits<OpenMesh::PolyMesh_ArrayKernelT<K> >::halfedge_descriptor(), sm);
+  
   set_halfedge(f, typename boost::graph_traits<OpenMesh::PolyMesh_ArrayKernelT<K> >::halfedge_descriptor(), sm);
   sm.status(f).set_deleted(true);
 }
 
-
+#if 0 // conflits with function in Euler_operations.h
 template<typename K>
 std::pair<typename boost::graph_traits<OpenMesh::PolyMesh_ArrayKernelT<K> >::edge_descriptor,
           bool>
@@ -618,6 +630,7 @@ add_edge(typename boost::graph_traits<OpenMesh::PolyMesh_ArrayKernelT<K> >::vert
   
   return sm.new_edge(v1, v2);
 }
+#endif
 
 template<typename K>
 typename boost::graph_traits<OpenMesh::PolyMesh_ArrayKernelT<K> >::face_descriptor
@@ -636,14 +649,31 @@ add_face(InputIterator begin, InputIterator end, OpenMesh::PolyMesh_ArrayKernelT
 }
 
 template<typename K>
-bool is_valid(OpenMesh::PolyMesh_ArrayKernelT<K>& sm, bool verbose = false)
+bool is_valid(OpenMesh::PolyMesh_ArrayKernelT<K>& sm, bool /* verbose */ = false)
 {
-  return true;
+  return CGAL::is_valid_polygon_mesh(sm);
 }
 
 } // namespace OpenMesh
 
+namespace CGAL {
 
+// Overload CGAL::clear function. PolyMesh_ArrayKernel behaves
+// differently from other meshes. Calling clear does not affect the
+// number of vertices, edges, or faces in the mesh. To get actual
+// numbers it is necessary to first collect garbage. We add an
+// overlaod to get consistent behavior.
+template<typename K>
+void clear(OpenMesh::PolyMesh_ArrayKernelT<K>& sm)
+{
+  sm.clear();
+  sm.garbage_collection(true, true, true);
+  CGAL_postcondition(num_edges(sm) == 0);
+  CGAL_postcondition(num_vertices(sm) == 0);
+  CGAL_postcondition(num_faces(sm) == 0);
+}
+
+}
 #ifndef CGAL_NO_DEPRECATED_CODE
 #include <CGAL/boost/graph/backward_compatibility_functions.h>
 

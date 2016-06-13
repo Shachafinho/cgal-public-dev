@@ -3,9 +3,9 @@
  * Copyright (c) 1995-2004 Exact Computation Project
  * All rights reserved.
  *
- * This file is part of CORE (http://cs.nyu.edu/exact/core/).
+ * This file is part of CGAL (www.cgal.org).
  * You can redistribute it and/or modify it under the terms of the GNU
- * General Public License as published by the Free Software Foundation,
+ * Lesser General Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  *
  * Licensees holding a valid commercial license may use this file in
@@ -36,14 +36,43 @@
 
 #include <new>           // for placement new
 #include <cassert>
+#include <CGAL/assertions.h>
+#include <vector>
 
 namespace CORE { 
 
 #define CORE_EXPANSION_SIZE 1024
 template< class T, int nObjects = CORE_EXPANSION_SIZE >
 class MemoryPool {
+private:
+   struct Thunk {
+      T object;
+      Thunk* next;
+   };
+
 public:
    MemoryPool() : head( 0 ) {}
+
+  ~MemoryPool()
+  {
+    //CGAL_warning_code(
+      std::size_t count = 0;
+      Thunk* t = head;
+      while(t!=0){
+	++count;
+	t = t->next;
+      }
+    //);
+    //CGAL_warning_msg(count ==  nObjects * blocks.size(),
+    //                 "Cannot delete memory as there are cyclic references");
+
+    if(count ==  nObjects * blocks.size()){
+      for(std::size_t i=0; i < blocks.size();i++){
+        ::operator delete(blocks[i]);
+      }
+    }
+  }
+
 
    void* allocate(std::size_t size);
    void free(void* p);
@@ -52,15 +81,10 @@ public:
   static MemoryPool<T>& global_allocator() {
     return memPool;
   }
-  
-private:
-   struct Thunk { 
-      T object;
-      Thunk* next;
-   };
-
+ 
 private:
    Thunk* head; // next available block in the pool
+  std::vector<void*> blocks;
 
 private:
   // Static global allocator.
@@ -79,6 +103,7 @@ void* MemoryPool< T, nObjects >::allocate(std::size_t) {
       Thunk* pool = reinterpret_cast<Thunk*>(
 	 ::operator new(nObjects * sizeof(Thunk)));
 
+      blocks.push_back(pool);
       // initialize the chain (one-directional linked list)
       head = pool;
       for (int i = 0; i < last; ++i ) {
@@ -96,8 +121,12 @@ void* MemoryPool< T, nObjects >::allocate(std::size_t) {
 
 template< class T, int nObjects >
 void MemoryPool< T, nObjects >::free(void* t) {
-   assert(t != 0);     
+   CGAL_assertion(t != 0);     
    if (t == 0) return; // for safety
+   if(blocks.empty()){
+     std::cerr << typeid(T).name() << std::endl;
+   }
+   assert (! blocks.empty());
 
    // recycle the object memory, by putting it back into the chain
    reinterpret_cast<Thunk*>(t)->next = head;

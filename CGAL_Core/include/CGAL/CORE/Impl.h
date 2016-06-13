@@ -3,9 +3,9 @@
  * Copyright (c) 1995-2004 Exact Computation Project
  * All rights reserved.
  *
- * This file is part of CORE (http://cs.nyu.edu/exact/core/).
+ * This file is part of CGAL (www.cgal.org).
  * You can redistribute it and/or modify it under the terms of the GNU
- * General Public License as published by the Free Software Foundation,
+ * Lesser General Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  *
  * Licensees holding a valid commercial license may use this file in
@@ -42,13 +42,18 @@
 
 // Macros for memory pool
 #ifdef CORE_DISABLE_MEMORY_POOL
-  #define CORE_MEMORY(T)
+  #define CORE_NEW(T)
+  #define CORE_DELETE(T)
+  #define CORE_MEMORY_IMPL(T)
 #else
   #include <CGAL/CORE/MemoryPool.h>
-  #define CORE_MEMORY(T)                                                 \
-    void *operator new( size_t size)                                     \
+  #define CORE_NEW(T)  void *operator new( size_t size);
+  #define CORE_DELETE(T)  void operator delete( void *p, size_t );
+
+  #define CORE_MEMORY_IMPL(T)                                            \
+    void *T::operator new( size_t size)                                  \
     { return MemoryPool<T>::global_allocator().allocate(size); }         \
-    void operator delete( void *p, size_t )                              \
+    void T::operator delete( void *p, size_t )                           \
     { MemoryPool<T>::global_allocator().free(p); }
 #endif
 

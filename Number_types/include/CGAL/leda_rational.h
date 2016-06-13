@@ -25,6 +25,7 @@
 #ifndef CGAL_LEDA_RATIONAL_H
 #define CGAL_LEDA_RATIONAL_H
 
+#include <CGAL/IO/io.h>
 #include <CGAL/number_type_basic.h>
 
 #include <CGAL/leda_coercion_traits.h>
@@ -33,6 +34,7 @@
 #include <CGAL/Needs_parens_as_product.h>
 
 #include <utility>
+#include <limits>
 
 #include <CGAL/LEDA_basic.h>
 #if CGAL_LEDA_VERSION < 500
@@ -122,8 +124,9 @@ template <> class Real_embeddable_traits< leda_rational >
 #if CGAL_LEDA_VERSION >= 501
           CGAL_LEDA_SCOPE::interval temp(x);
           std::pair<double, double> result(temp.lower_bound(),temp.upper_bound());
-          CGAL_postcondition(Type(result.first)<=x);
-          CGAL_postcondition(Type(result.second)>=x);
+          CGAL_assertion_code( double infinity=std::numeric_limits<double>::infinity(); )
+          CGAL_postcondition(result.first  == -infinity || Type(result.first)<=x);
+          CGAL_postcondition(result.second ==  infinity || Type(result.second)>=x);
           return result;
 #else
           CGAL_LEDA_SCOPE::bigfloat xnum = x.numerator();
@@ -277,6 +280,17 @@ public:
 
 };
 
+namespace internal {
+  // See: Stream_support/include/CGAL/IO/io.h
+  template <typename ET>
+  void read_float_or_quotient(std::istream & is, ET& et);
+
+  template <>
+  inline void read_float_or_quotient(std::istream & is, leda_rational& et)
+  {
+    internal::read_float_or_quotient<leda_integer,leda_rational>(is, et);
+  }
+} // namespace internal
 
 } //namespace CGAL
 

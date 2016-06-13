@@ -68,7 +68,7 @@ public:
   /*!
     the traits class in use. 
   */ 
-  typedef unspecified_type Traits_2; 
+  typedef Traits Traits_2;
 
   /*!
     the <span class="textsc">Dcel</span> representation of the arrangement. 
@@ -369,6 +369,10 @@ counterparts. `Vertex_iterator`, `Halfedge_iterator`, and
 `Vertex_handle`, `Halfedge_handle`, and `Face_handle`). Thus, wherever
 the handles appear in function parameter lists, the respective
 iterators can be passed as well.
+
+All handles are model of `LessThanComparable` and `Hashable`,
+that is they can be used as keys in containers such as `std::map`
+and `boost::unordered_map`. 
 
 */
 /// @{

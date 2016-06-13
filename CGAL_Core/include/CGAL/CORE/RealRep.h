@@ -3,9 +3,9 @@
  * Copyright (c) 1995-2004 Exact Computation Project
  * All rights reserved.
  *
- * This file is part of CORE (http://cs.nyu.edu/exact/core/).
+ * This file is part of CGAL (www.cgal.org).
  * You can redistribute it and/or modify it under the terms of the GNU
- * General Public License as published by the Free Software Foundation,
+ * Lesser General Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
  *
  * Licensees holding a valid commercial license may use this file in
@@ -93,7 +93,10 @@ private:
 template <class T>
 class Realbase_for : public RealRep {
 public:
-  CORE_MEMORY(Realbase_for)
+
+  CGAL_CORE_EXPORT CORE_NEW(Realbase_for)
+  CGAL_CORE_EXPORT CORE_DELETE(Realbase_for)
+
   Realbase_for(const T& k);
   ~Realbase_for() {}
   int ID() const;

@@ -24,6 +24,9 @@
 #include <CGAL/Kd_tree_rectangle.h>
 #include <CGAL/Search_traits_adapter.h>
 
+#include <boost/type_traits.hpp>
+#include <boost/utility/enable_if.hpp>
+
 namespace CGAL {
 
   namespace internal{
@@ -34,6 +37,7 @@ namespace CGAL {
     public:
 
     typedef typename SearchTraits::FT FT;
+    typedef typename SearchTraits::Dimension Dimension;
     private:
 
     Point_d c;
@@ -75,7 +79,7 @@ namespace CGAL {
         }
 
         
-	bool inner_range_intersects(const Kd_tree_rectangle<FT>& rectangle) const {                          
+	bool inner_range_intersects(const Kd_tree_rectangle<FT,Dimension>& rectangle) const {                          
                 // test whether the interior of a sphere
 		// with radius (r-eps) intersects r, i.e.
                 // if the minimal distance of r to c is less than r-eps
@@ -98,7 +102,7 @@ namespace CGAL {
 	}
 
 
-	bool outer_range_contains(const Kd_tree_rectangle<FT>& rectangle) const { 
+	bool outer_range_contains(const Kd_tree_rectangle<FT,Dimension>& rectangle) const { 
         // test whether the interior of a sphere
 	// with radius (r+eps) is contained by r, i.e.
         // if the minimal distance of the boundary of r 
@@ -149,8 +153,12 @@ namespace CGAL {
     Fuzzy_sphere(const SearchTraits& traits_=SearchTraits()):Base(traits_){};
     Fuzzy_sphere(const typename Base_traits::Point_d& center, FT radius, FT epsilon=FT(0),const SearchTraits& traits_=SearchTraits()) : 
       Base(center,radius,epsilon,traits_) {}
-    Fuzzy_sphere(const typename SearchTraits::Point_d& center, FT radius, FT epsilon=FT(0),const SearchTraits& traits_=SearchTraits()) : 
-      Base(get(traits_.point_property_map(),center),radius,epsilon,traits_) {}
+    Fuzzy_sphere(const typename SearchTraits::Point_d& center, FT radius, FT epsilon=FT(0),
+                 const SearchTraits& traits_=SearchTraits(),
+                 typename boost::disable_if<
+                  boost::is_same<typename Base_traits::Point_d,
+                                 typename SearchTraits::Point_d> >::type* = 0)
+      : Base(get(traits_.point_property_map(),center),radius,epsilon,traits_) {}
   };
   
 } // namespace CGAL

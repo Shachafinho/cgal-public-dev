@@ -30,8 +30,8 @@ Multiscale_sort (const Sort &sort = Sort(), std::ptrdiff_t threshold = 1, double
 /// @{
 
 /*!
-sorts the range `[begin, end)`. 
-\cgalRequires `Sort::operator()(RandomAccessIterator begin, RandomAccessIterator end)` is defined. 
+It sorts the range `[begin, end)`. 
+`Sort::operator()(RandomAccessIterator begin, RandomAccessIterator end)` must be defined.
 */ 
 template <class RandomAccessIterator> void operator() (RandomAccessIterator begin, RandomAccessIterator end) const; 
 

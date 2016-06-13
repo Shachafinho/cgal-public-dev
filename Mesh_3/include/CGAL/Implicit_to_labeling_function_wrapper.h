@@ -37,10 +37,13 @@
 #endif
 
 #include <boost/dynamic_bitset.hpp>
-
-namespace CGAL {
+#include <boost/type_traits/remove_reference.hpp>
+#include <boost/type_traits/remove_cv.hpp>
 
 #include <CGAL/config.h>
+#include <CGAL/assertions.h>
+
+namespace CGAL {
 
 /**
  * @class Implicit_to_labeling_function_wrapper
@@ -163,13 +166,14 @@ public:
 
 private:
   std::vector<Function> funcs;
-  std::vector<boost::dynamic_bitset<> > bmasks;
+  typedef boost::dynamic_bitset<std::size_t> Bmask;
+  std::vector<Bmask> bmasks;
 
 public:
   Implicit_multi_domain_to_labeling_function_wrapper (const Function_vector& vf, const std::vector<std::vector<Sign> >& vps)
-  : funcs(vf), bmasks(vps.size(), boost::dynamic_bitset<>(funcs.size() * 2, false))
+  : funcs(vf), bmasks(vps.size(), Bmask(funcs.size() * 2, false))
   {
-    assert(funcs.size());
+    CGAL_assertion(funcs.size() != 0);
 
     std::size_t mask_index = 0;
     for (std::vector<std::vector<Sign> >::const_iterator mask_iter = vps.begin(), mask_end_iter = vps.end();
@@ -177,18 +181,18 @@ public:
          ++mask_iter)
     {
       const std::vector<Sign>& mask = *mask_iter;
-      assert(funcs.size() == mask.size());
-      boost::dynamic_bitset<>& bmask = bmasks[mask_index++];
+      CGAL_assertion(funcs.size() == mask.size());
+      Bmask& bmask = bmasks[mask_index++];
 
-      std::size_t bit_index = 0;
+      typename Bmask::size_type bit_index = 0;
       for (std::vector<Sign>::const_iterator iter = mask.begin(), endIter = mask.end(); iter != endIter; ++iter)
       {
         std::string::value_type character = *iter;
-        assert(character == POSITIVE || character == NEGATIVE);
+        CGAL_assertion(character == POSITIVE || character == NEGATIVE);
 
-        bmask[bit_index] = character == POSITIVE;
+        bmask[bit_index] = (character == POSITIVE);
         ++bit_index;
-        bmask[bit_index] = character == NEGATIVE;
+        bmask[bit_index] = (character == NEGATIVE);
         ++bit_index;
       }
     }
@@ -198,18 +202,18 @@ public:
   Implicit_multi_domain_to_labeling_function_wrapper (const Function_vector& vf)
   : funcs(vf)
   {
-    assert(funcs.size());
+    CGAL_assertion(funcs.size() != 0);
 
     bmasks.reserve((1 << funcs.size()) - 1);
-    bmasks.push_back(boost::dynamic_bitset<>(std::string("10")));
-    bmasks.push_back(boost::dynamic_bitset<>(std::string("01")));
+    bmasks.push_back(Bmask(std::string("10")));
+    bmasks.push_back(Bmask(std::string("01")));
 
     for (std::size_t i = 0; i < funcs.size()-1; ++i)
     {
       std::size_t c_size = bmasks.size();
       for (std::size_t index = 0; index < c_size; ++index)
       {
-        boost::dynamic_bitset<> aux = bmasks[index];
+        Bmask aux = bmasks[index];
         aux.push_back(true);
         aux.push_back(false);
         bmasks.push_back(aux);
@@ -222,9 +226,9 @@ public:
   }
 
   Implicit_multi_domain_to_labeling_function_wrapper (const Function_vector& vf, const std::vector<std::string>& vps)
-  : funcs(vf), bmasks(vps.size(), boost::dynamic_bitset<>(funcs.size() * 2, false))
+  : funcs(vf), bmasks(vps.size(), Bmask(funcs.size() * 2, false))
   {
-    assert(funcs.size());
+    CGAL_assertion(funcs.size() != 0);
 
     std::size_t mask_index = 0;
     for (std::vector<std::string>::const_iterator mask_iter = vps.begin(), mask_end_iter = vps.end();
@@ -232,18 +236,18 @@ public:
          ++mask_iter)
     {
       const std::string& mask_str = *mask_iter;
-      assert(funcs.size() == mask_str.length());
-      boost::dynamic_bitset<>& bmask = bmasks[mask_index++];
+      CGAL_assertion(funcs.size() == mask_str.length());
+      Bmask& bmask = bmasks[mask_index++];
 
-      std::size_t bit_index = 0;
+      typename Bmask::size_type bit_index = 0;
       for (std::string::const_iterator iter = mask_str.begin(), endIter = mask_str.end(); iter != endIter; ++iter)
       {
         std::string::value_type character = *iter;
-        assert(character == '+' || character == '-');
+        CGAL_assertion(character == '+' || character == '-');
 
-        bmask[bit_index] = character == '+';
+        bmask[bit_index] = (character == '+');
         ++bit_index;
-        bmask[bit_index] = character == '-';
+        bmask[bit_index] = (character == '-');
         ++bit_index;
       }
     }
@@ -252,7 +256,7 @@ public:
 
   return_type operator() (const Point_3& p, const bool = true) const
   {
-    boost::dynamic_bitset<> bmask(funcs.size() * 2, false);
+    Bmask bmask(funcs.size() * 2, false);
 
     std::size_t i = 0;
     for (typename std::vector<Function>::const_iterator iter = funcs.begin(), endIter = funcs.end();
@@ -268,7 +272,7 @@ public:
       ++i;
     }
 
-    std::vector<boost::dynamic_bitset<> >::const_iterator iter = std::lower_bound(bmasks.begin(), bmasks.end(), bmask);
+    std::vector<Bmask>::const_iterator iter = std::lower_bound(bmasks.begin(), bmasks.end(), bmask);
     if (iter != bmasks.end() && *iter == bmask)
       return static_cast<return_type>(1 + (iter - bmasks.begin()));
     return 0;
