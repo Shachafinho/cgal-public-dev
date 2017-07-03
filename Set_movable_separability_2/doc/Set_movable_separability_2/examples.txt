@@ -1,0 +1,3 @@
+/*!
+\example Set_movable_separability_2/single_mold_translational_casting.cpp
+*/

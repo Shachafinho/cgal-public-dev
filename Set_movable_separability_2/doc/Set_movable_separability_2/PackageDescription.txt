@@ -1,0 +1,38 @@
+/// \defgroup PkgSetMovableSeparability2 2D Movable Separability of Sets Reference
+
+/// \defgroup PkgSetMovableSeparability2Funcs Free Functions
+/// \ingroup PkgSetMovableSeparability2
+
+/// \defgroup PkgSetMovableSeparability2Concepts Concepts
+/// \ingroup PkgSetMovableSeparability2
+
+/*!
+\addtogroup PkgSetMovableSeparability2
+\cgalPkgDescriptionBegin{2D Movable Separability of Sets,PkgSetMovableSeparability2Summary}
+\cgalPkgPicture{Casting_2.png}
+\cgalPkgSummaryBegin
+\cgalPkgAuthors{Shahar Shamai, Efi Fogel}
+\cgalPkgDesc{This package consists of the implementations of various predicates and operations related to castings of polygonal objects. In particular, it can be used to determine whether a mold for a polygonal object does exist. If a mold exists, the package can also be used to compute all possible orientations of the feasible molds and the corresponding motions needed to remove the casted object from the mold.}
+\cgalPkgManuals{Chapter_SetMovableSeparability2,PkgSetMovableSeparability2}
+\cgalPkgSummaryEnd
+\cgalPkgShortInfoBegin
+\cgalPkgSince{4.10}
+\cgalPkgDependsOn{\ref PkgPolygon2Summary}
+\cgalPkgBib{cgal:sf-casting2}
+\cgalPkgLicense{\ref licensesGPL "GPL"}
+\cgalPkgShortInfoEnd
+\cgalPkgDescriptionEnd
+
+This package consists of the implementations of various predicates and operations related to castings of polygonal objects. In particular, it can be used to determine whether a mold for a polygonal object does exist. If a mold exists, the package can also used to compute all possible orientations of the feasible molds and the corresponding motions needed to remove the casted object from the mold.
+
+\cgalClassifedRefPages
+
+## Functions ##
+- `CGAL::top_edges_single_mold_translational_casting_2()`
+- `CGAL::pullout_directions_single_mold_translational_casting_2()`
+- `CGAL::is_pullout_direction_single_mold_translational_casting_2()`
+
+## Concepts ##
+- `CastingTraits_2`
+
+*/

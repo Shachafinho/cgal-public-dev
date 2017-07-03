@@ -70,7 +70,7 @@ Arr_simple_point_location<Arrangement>::locate(const Point_2& p) const
   Optional_result_type optional_obj = _base_vertical_ray_shoot(p, true);
   if (optional_empty(optional_obj)) {
     // We should return the unbounded face.
-    Face_const_handle fh = Face_const_handle(m_topol_traits->initial_face());
+    Face_const_handle fh = Face_const_handle(m_topol_traits->reference_face());
     return make_result(fh);
   }
 
